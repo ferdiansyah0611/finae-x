@@ -1,0 +1,9 @@
+{
+  "imports": {
+    "@/": "./",
+    "lodash": "https://esm.sh/lodash@4.17.21",
+    "flags": "https://deno.land/std@0.201.0/flags/mod.ts",
+    "colors": "https://deno.land/std@0.201.0/fmt/colors.ts",
+    "printf": "https://deno.land/std@0.201.0/fmt/printf.ts"
+  }
+}
