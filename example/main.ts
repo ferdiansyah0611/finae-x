@@ -1,58 +1,58 @@
-import { Program } from "@/mod.ts";
+// deno-lint-ignore-file no-explicit-any
+import { Program } from '@/mod.ts';
 
-const program = new Program("tools-web", "web code generator", {
-	version: "1.0.0"
+const program = new Program('tools-web', 'web code generator', {
+	version: '1.0.0',
 });
+program
+	.helpOption('--help', 'Print help (see more with \'--help\')')
+	.addOption('--verbose', 'this is verbose');
 
-const reactCommand = program.command("react", "react cli");
-reactCommand
-	.command("add", "add react project")
-	.action(() => {
-		console.log("add");
-	})
+const react = program.command('react', 'react cli');
 
-reactCommand
-	.command("delete", "delete react project")
-	.action(() => {
-		console.log("delete");
-	})
+react
+	.command('add', 'create new project')
+	.argument('name', 'name of project')
+	.action((argument: any) => {
+		console.log('ARGUMENT:');
+		console.log(argument);
+	});
 
-reactCommand
-	.command("state", "state react project")
-	.argument("name", "name of state")
-	.action((argument) => {
-		console.log("state %s", argument.name);
-	})
-
-reactCommand
-	.command("type", "type react project")
-	.option("--data", "name of type", (cls) => cls.required().array(["react", "typescript"]))
-	.option("-n, --name", "name of type", (cls) => cls.required().variadic())
-	.option("--number", "number of type", (cls) => cls.required().number())
-	.action((options) => {
+react
+	.command('make:component', 'generate component')
+	.argument('name', 'name of component')
+	.option(
+		'style',
+		'include style',
+		(cls) => cls.required().include(['css', 'scss', 'sass']),
+	)
+	.option('css', 'css style', (cls) => cls.conflicts('style'))
+	.action((argument: any, options: any) => {
+		console.log('ARGUMENT:');
+		console.log(argument);
+		console.log('OPTION:');
 		console.log(options);
-	})
+	});
 
-const authCommand = program.command("auth", "auth handling");
-authCommand.command("signin", "do signin")
-	.argument("email", "email address")
-	.argument("password", "your password")
-	.action(() => console.log("signin"))
+program
+	.command('drink', 'buy some drinks')
+	.option(
+		'drink',
+		'select drink',
+		(cls) => cls.include(['small', 'medium', 'big']),
+	)
+	.option('free', 'free drink', (cls) => cls.implies({ drink: 'small' }))
+	.action((argument: any) => {
+		console.log('ARGUMENT:');
+		console.log(argument);
+	});
 
-authCommand.command("signup", "do signup")
-	.argument("<name>", "Your Name")
-	.argument("<email>", "Email Address")
-	.argument("<password>", "Your Password")
-	.action(() => console.log("signup"))
-
-// await program.exec("react");
-// await program.exec("react add");
-// await program.exec("react delete");
-// await program.exec("react state");
-await program.exec("react type --data typescript -n 10 --number 200.90");
-// await program.exec("react type -n fefe aa ccc --data pl");
-// await program.exec("react type");
-// await program.exec("auth signup ferdi ferdi@gmail.com gg");
-// await program.exec("-h");
-// await program.exec("-v");
-// console.log(await program.help());
+try {
+	await program.exec('react add myproject');
+	await program.exec('react make:component Sidebar --style css');
+	await program.exec('react make:component Sidebar --style css --css');
+	await program.exec('drink --free');
+	await program.exec('drink --help');
+} catch (error) {
+	console.log(error.message);
+}

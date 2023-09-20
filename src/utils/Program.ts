@@ -1,19 +1,24 @@
 // deno-lint-ignore-file
-import _ from "lodash";
-import { sprintf } from "printf";
-import { CommandType, ProgramType } from "@/types.d.ts";
-import { stderr } from "@/src/utils/Errors.ts";
-import Command from "@/src/utils/Command.ts";
-import Parse from "@/src/utils/Parse.ts";
-import Help from "@/src/utils/Help.ts";
-import highlight from "@/src/helpers/highlight.ts";
-import message from "@/src/helpers/message.ts";
+import _ from 'lodash';
+import { sprintf } from 'printf';
+import { CommandType, OptionType, ProgramType } from '@/types.d.ts';
+import { stderr } from '@/src/utils/Errors.ts';
+import Command from '@/src/utils/Command.ts';
+import Parse from '@/src/utils/Parse.ts';
+import Help from '@/src/utils/Help.ts';
+import highlight from '@/src/helpers/highlight.ts';
+import message from '@/src/helpers/message.ts';
+import Option from '@/src/utils/Option.ts';
 
 class Program implements ProgramType.Type {
 	#name: string;
 	#description: string;
 	#config: ProgramType.Config = { stderr };
 	#commands: CommandType.Type[] = [];
+	#setup: ProgramType.Setup = {
+		help: new Option('-h, --help', 'Show the help command'),
+		options: [],
+	};
 	constructor(name: string, description: string, config: ProgramType.Config) {
 		this.#name = name;
 		this.#description = description;
@@ -22,7 +27,11 @@ class Program implements ProgramType.Type {
 		if (!config.stderr) this.#config.stderr = stderr;
 	}
 
-	command(name: string, description: string, config?: CommandType.Config): CommandType.Type {
+	command(
+		name: string,
+		description: string,
+		config?: CommandType.Config,
+	): CommandType.Type {
 		const result = new Command(this, name, description, config);
 		this.#commands.push(result);
 		return result;
@@ -37,11 +46,42 @@ class Program implements ProgramType.Type {
 			config: this.#config,
 		};
 	}
+	getSetup(): ProgramType.Setup {
+		return this.#setup;
+	}
+	addOption(
+		synopsis: string,
+		description: string,
+		callback?: (cls: OptionType.Type) => any,
+	): ProgramType.Type {
+		const cls = new Option(synopsis, description);
+		if (callback) callback(cls);
+		this.#setup.options.push(cls);
+		return this;
+	}
+	helpOption(
+		synopsis?: string | boolean | undefined,
+		description?: string | undefined,
+	): ProgramType.Type {
+		if (typeof synopsis === 'boolean') {
+			if (!synopsis) this.#setup.help = null;
+		} else if (typeof synopsis === 'string') {
+			if (!description) description = '';
+			this.#setup.help = new Option(synopsis, description);
+		}
+		return this;
+	}
 
 	help(stdout: boolean = true): string {
-		const help = new Help(this.#name, this.#description, this.#config?.version || "1.0.0", {
-			commands: this.#commands,
-		});
+		const help = new Help(
+			this.#name,
+			this.#description,
+			this.#config?.version || '1.0.0',
+			{
+				commands: this.#commands,
+			},
+			this,
+		);
 		const result = highlight(help.compile());
 		if (stdout) console.log(result);
 		return result;
@@ -50,22 +90,30 @@ class Program implements ProgramType.Type {
 	async exec(shell: string): Promise<ProgramType.ReturnExec> {
 		let errors: string[] = [];
 		const result: number[] = [];
-		const { _: argument, ...options } = Parse(shell.split(" "));
+		const { _: argument, ...options } = Parse(shell.split(' '));
 		const lowerCaseShell = shell.toLowerCase();
-		const response = (stdout: any, stderr: string[] | string | null) => ({ stdout, stderr });
+		const response = (stdout: any, stderr: string[] | string | null) => ({
+			stdout,
+			stderr,
+		});
+		const isHelp = () => {
+			if (this.#setup.help) {
+				const { results } = this.#setup.help.getInformation();
+				return options[results.fullName] || options[results.char];
+			}
+		};
 		// core command here
-		if (["-v", "--version"].includes(lowerCaseShell)) {
-			let version = this.#config.version ? this.#config.version : "1.0.0";
+		if (['-v', '--version'].includes(lowerCaseShell)) {
+			let version = this.#config.version ? this.#config.version : '1.0.0';
 			console.log(version);
 			return response(null, null);
 		}
-		if (["-h", "--help"].includes(lowerCaseShell)) {
-			this.help();
-			return response(null, null);
+		if (!argument.length && isHelp()) {
+			return response(this.help(), null);
 		}
 
 		for (const command of this.#commands) {
-			const splitFromCommand = command.getInformation().name.split(" ");
+			const splitFromCommand = command.getInformation().name.split(' ');
 			let counter = 0;
 			for (const index in argument) {
 				if (argument[index] === splitFromCommand[index]) {
@@ -90,13 +138,12 @@ class Program implements ProgramType.Type {
 			options: currentCommand.getOption(),
 		};
 		const newArgument: any = {};
-		const splitFromCommand = information.info.name.split(" ");
+		const splitFromCommand = information.info.name.split(' ');
 		const potentialArg = argument.filter((arg) => !splitFromCommand.find((split) => split === arg));
 
 		// help
-		if (options.help || options.h) {
-			currentCommand.showHelp();
-			return response(null, null);
+		if (isHelp()) {
+			return response(currentCommand.showHelp(), null);
 		}
 
 		// check argument
@@ -112,7 +159,16 @@ class Program implements ProgramType.Type {
 			}
 		}
 
-		// check options
+		// find implies options before validation
+		for (const current of information.options) {
+			const { config } = current.getInformation();
+			if (!config.implies) continue;
+			for (const implies of Object.keys(config.implies)) {
+				options[implies] = config.implies[implies];
+			}
+		}
+
+		// validation options
 		for (const current of information.options) {
 			const stats = current.doValidation(options);
 			errors = errors.concat(stats.fail);
@@ -122,7 +178,7 @@ class Program implements ProgramType.Type {
 			let isValid = false;
 			for (const current of information.options) {
 				const { results } = current.getInformation();
-				if (key === results.alias || key === results.fullName) {
+				if (key === results.char || key === results.fullName) {
 					isValid = true;
 					break;
 				}
@@ -136,12 +192,14 @@ class Program implements ProgramType.Type {
 			this.#showError(errors);
 			return response(null, errors);
 		}
-		
+
 		let progress = await currentCommand.execute({
 			argument: Object.keys(newArgument).length ? newArgument : null,
 			options,
 		});
-		if (progress && progress.isCore && progress.stderr) return response(null, progress.stderr);
+		if (progress && progress.isCore && progress.stderr) {
+			return response(null, progress.stderr);
+		}
 		return response(progress, null);
 	}
 

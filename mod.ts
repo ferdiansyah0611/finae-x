@@ -1,4 +1,4 @@
-import Program from "@/src/utils/Program.ts";
-import Command from "@/src/utils/Command.ts";
+import Program from '@/src/utils/Program.ts';
+import Command from '@/src/utils/Command.ts';
 
-export { Program, Command };
+export { Command, Program };

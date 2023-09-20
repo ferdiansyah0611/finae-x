@@ -1,146 +1,354 @@
-import { Program } from "@/mod.ts";
-import { ProgramType } from "@/types.d.ts";
-import { assertEquals } from "https://deno.land/std@0.201.0/assert/assert_equals.ts";
-import { errorTest } from "@/test/Test.ts";
+// deno-lint-ignore-file no-explicit-any
+import { assertEquals } from 'https://deno.land/std@0.201.0/assert/assert_equals.ts';
+import { errorTest } from '@/test/Test.ts';
+import instance from '@/test/instance.test.ts';
+import { ProgramType } from '@/types.d.ts';
 
-Deno.test("Core CLI", async (t) => {
-	let response;
-	const description = "this is description";
-	// deno-lint-ignore no-explicit-any
-	const action = (argument: any) => {
-		return argument;
-	};
-	// deno-lint-ignore no-explicit-any
-	const actionArgumentOption = (argument: any, option: any) => {
-		return { argument, option };
-	};
-	// deno-lint-ignore no-explicit-any
-	const config: any = {};
-	if (Deno.args.indexOf("--no-error") !== -1) config.stderr = () => {};
+Deno.test('Core CLI', async (t) => {
+	const maker = (cmd: string, callback: any) => ({ cmd, callback });
+	const sampleArgument: any[] = [
+		maker('ferdy', (argument: any) => {
+			assertEquals(argument.name, 'ferdy');
+		}),
+		maker('ferdy pw12345', (argument: any) => {
+			assertEquals(argument.name, 'ferdy');
+			assertEquals(argument.password, 'pw12345');
+		}),
+		maker('ferdy safina with love forever', (argument: any) => {
+			assertEquals(argument.one, 'ferdy');
+			assertEquals(argument.two, 'safina');
+			assertEquals(argument.three, 'with');
+			assertEquals(argument.fourth, 'love');
+			assertEquals(argument.five, 'forever');
+		}),
+		maker('ferdy safina', (argument: any) => {
+			assertEquals(argument.data, ['ferdy', 'safina']);
+		}),
+		maker('100', (argument: any) => {
+			assertEquals(argument.numeric, 100);
+		}),
+		maker('100.1', (argument: any) => {
+			assertEquals(argument.numeric, 100.1);
+		}),
+		maker('100', (argument: any) => {
+			assertEquals(argument.id, 100);
+		}),
+		maker('1001', (argument: any) => {
+			assertEquals(argument.id, 1001);
+		}),
+		maker('ferdy', (argument: any) => {
+			assertEquals(argument.name, 'ferdy');
+		}),
+		maker('ferdy', (argument: any) => {
+			assertEquals(argument.name, 'ferdy');
+		}),
+		maker('', (argument: any) => {
+			assertEquals(argument.data, '1.1.1.1');
+		}),
+		maker('100 1000', (argument: any) => {
+			assertEquals(argument.numeric, [100, 1000]);
+		}),
+		maker('100.1 1000.1', (argument: any) => {
+			assertEquals(argument.numeric, [100.1, 1000.1]);
+		}),
+		maker('lorem ipsum kolor sijamet', (argument: any) => {
+			assertEquals(argument.data, ['lorem', 'ipsum', 'kolor', 'sijamet']);
+		}),
+		maker('jsx tsx', (argument: any) => {
+			assertEquals(argument.format, ['jsx', 'tsx']);
+		}),
+		maker('java php', (argument: any) => {
+			assertEquals(argument.format, ['java', 'php']);
+		}),
+	];
 
-	const program: ProgramType.Type = new Program("Core CLI", description, config);
-	program.command("argument", description).argument("name", description).action(action);
-	program
-		.command("argument:2", description)
-		.argument("name", description)
-		.argument("email", description)
-		.action(action);
-	program
-		.command("argument:3", description)
-		.argument("number", description, (cls) => cls.variadic().number())
-		.action(action);
-	program
-		.command("argument:4", description)
-		.argument("type", description, (cls) => cls.array(["ts", "tsx"]))
-		.action(action);
+	const sampleOption: any[] = [
+		maker('--name ferdy', (argument: any) => {
+			assertEquals(argument.name, 'ferdy');
+		}),
+		maker('--name ferdy --password pw12345', (argument: any) => {
+			assertEquals(argument.name, 'ferdy');
+			assertEquals(argument.password, 'pw12345');
+		}),
+		maker(
+			'--one ferdy --two safina --three with --fourth love --five forever',
+			(argument: any) => {
+				assertEquals(argument.one, 'ferdy');
+				assertEquals(argument.two, 'safina');
+				assertEquals(argument.three, 'with');
+				assertEquals(argument.fourth, 'love');
+				assertEquals(argument.five, 'forever');
+			},
+		),
+		maker('--data ferdy safina', (argument: any) => {
+			assertEquals(argument.data, ['ferdy', 'safina']);
+		}),
+		maker('--numeric 100', (argument: any) => {
+			assertEquals(argument.numeric, 100);
+		}),
+		maker('--numeric 100.1', (argument: any) => {
+			assertEquals(argument.numeric, 100.1);
+		}),
+		maker('--id 100', (argument: any) => {
+			assertEquals(argument.id, 100);
+		}),
+		maker('--id 1001', (argument: any) => {
+			assertEquals(argument.id, 1001);
+		}),
+		maker('--name ferdy', (argument: any) => {
+			assertEquals(argument.name, 'ferdy');
+		}),
+		maker('--name ferdy', (argument: any) => {
+			assertEquals(argument.name, 'ferdy');
+		}),
+		maker('', (argument: any) => {
+			assertEquals(argument.data, '1.1.1.1');
+		}),
+		maker('--numeric 100 1000', (argument: any) => {
+			assertEquals(argument.numeric, [100, 1000]);
+		}),
+		maker('--numeric 100.1 1000.1', (argument: any) => {
+			assertEquals(argument.numeric, [100.1, 1000.1]);
+		}),
+		maker('--data lorem ipsum kolor sijamet', (argument: any) => {
+			assertEquals(argument.data, ['lorem', 'ipsum', 'kolor', 'sijamet']);
+		}),
+		maker('--format jsx tsx', (argument: any) => {
+			assertEquals(argument.format, ['jsx', 'tsx']);
+		}),
+		maker('--format java php', (argument: any) => {
+			assertEquals(argument.format, ['java', 'php']);
+		}),
+	];
 
-	program.command("option", description).option("name", description).action(action);
-	program.command("option:2", description).option("-n, --name", description).action(action);
-	program
-		.command("option:3", description)
-		.option("number", description, (cls) => cls.required().number())
-		.action(action);
-	program
-		.command("option:4", description)
-		.option("--type <type...>", description, (cls) => cls.array(["js", "tsx"]))
-		.action(action);
-	program
-		.command("option:5", description)
-		.option("--float <float...>", description, (cls) => cls.float())
-		.action(action);
+	const sampleData: any[] = [
+		maker('ferdy --data ferdy', (argument: any, option: any) => {
+			assertEquals(argument.data, 'ferdy');
+			assertEquals(option.data, 'ferdy');
+		}),
+		maker(
+			'ferdy safina --data1 ferdy --data2 safina',
+			(argument: any, option: any) => {
+				assertEquals(argument.data1, 'ferdy');
+				assertEquals(argument.data2, 'safina');
+				assertEquals(option.data1, 'ferdy');
+				assertEquals(option.data2, 'safina');
+			},
+		),
+		maker(
+			'ferdy safina with love forever --data1 ferdy --data2 safina --data3 with --data4 love --data5 forever',
+			(argument: any, option: any) => {
+				assertEquals(argument.data1, 'ferdy');
+				assertEquals(argument.data2, 'safina');
+				assertEquals(argument.data3, 'with');
+				assertEquals(argument.data4, 'love');
+				assertEquals(argument.data5, 'forever');
+				assertEquals(option.data1, 'ferdy');
+				assertEquals(option.data2, 'safina');
+				assertEquals(option.data3, 'with');
+				assertEquals(option.data4, 'love');
+				assertEquals(option.data5, 'forever');
+			},
+		),
+		maker(
+			'ferdy safina --data ferdy safina',
+			(argument: any, option: any) => {
+				assertEquals(argument.data, ['ferdy', 'safina']);
+				assertEquals(option.data, ['ferdy', 'safina']);
+			},
+		),
+		maker('100 --data 100', (argument: any, option: any) => {
+			assertEquals(argument.data, 100);
+			assertEquals(option.data, 100);
+		}),
+		maker('100.1 --data 100.1', (argument: any, option: any) => {
+			assertEquals(argument.data, 100.1);
+			assertEquals(option.data, 100.1);
+		}),
+		maker('100 --data 100', (argument: any, option: any) => {
+			assertEquals(argument.data, 100);
+			assertEquals(option.data, 100);
+		}),
+		maker('1001 --data 1001', (argument: any, option: any) => {
+			assertEquals(argument.data, 1001);
+			assertEquals(option.data, 1001);
+		}),
+		maker('ferdy --data ferdy', (argument: any, option: any) => {
+			assertEquals(argument.data, 'ferdy');
+			assertEquals(option.data, 'ferdy');
+		}),
+		maker('ferdy --data ferdy', (argument: any, option: any) => {
+			assertEquals(argument.data, 'ferdy');
+			assertEquals(option.data, 'ferdy');
+		}),
+		maker('', (argument: any, option: any) => {
+			assertEquals(argument.data, '1.1.1.1');
+			assertEquals(option.data, '1.1.1.1');
+		}),
+		maker('100 1000 --data 100 1000', (argument: any, option: any) => {
+			assertEquals(argument.data, [100, 1000]);
+			assertEquals(option.data, [100, 1000]);
+		}),
+		maker(
+			'100.1 1000.1 --data 100.1 1000.1',
+			(argument: any, option: any) => {
+				assertEquals(argument.data, [100.1, 1000.1]);
+				assertEquals(option.data, [100.1, 1000.1]);
+			},
+		),
+		maker(
+			'lorem ipsum kolor sijamet --data lorem ipsum kolor sijamet',
+			(argument: any, option: any) => {
+				assertEquals(argument.data, [
+					'lorem',
+					'ipsum',
+					'kolor',
+					'sijamet',
+				]);
+				assertEquals(option.data, [
+					'lorem',
+					'ipsum',
+					'kolor',
+					'sijamet',
+				]);
+			},
+		),
+		maker('jsx tsx --data jsx tsx', (argument: any, option: any) => {
+			assertEquals(argument.data, ['jsx', 'tsx']);
+			assertEquals(option.data, ['jsx', 'tsx']);
+		}),
+		maker('java php --data java php', (argument: any, option: any) => {
+			assertEquals(argument.data, ['java', 'php']);
+			assertEquals(option.data, ['java', 'php']);
+		}),
+	];
 
-	program
-		.command("db:delete", description)
-		.argument("<table>", description)
-		.argument("<...id>", description, cls => cls.number())
-		.option("--dbname <database>", description)
-		.option("--float <float>", description, cls => cls.float())
-		.option("--arraarra <string>", description, cls => cls.array(["lorem", "ipsum"]))
-		.action(actionArgumentOption)
+	await t.step('Validation STDOUT', async (t) => {
+		let i = 0;
+		for (const command of instance.getAllCommands()) {
+			const info = command.getInformation();
+			if (!info.name.startsWith('argument:')) continue;
+			await t.step(info.name, async () => {
+				const result = await instance.exec(
+					info.name +
+						(sampleArgument[i] ? ' ' + sampleArgument[i].cmd : ''),
+				);
+				if (result.stdout && sampleArgument[i]) {
+					sampleArgument[i].callback(result.stdout);
+				} else {
+					console.log(result);
+				}
+			});
+			i += 1;
+		}
 
-	// await t.step("argument with stdout", async () => {
-	// 	response = await program.exec("argument ferdy");
-	// 	assertEquals(response.stdout.name, "ferdy");
+		i = 0;
+		for (const command of instance.getAllCommands()) {
+			const info = command.getInformation();
+			if (!info.name.startsWith('option:')) continue;
+			await t.step(info.name, async () => {
+				const result = await instance.exec(
+					info.name +
+						(sampleOption[i] ? ' ' + sampleOption[i].cmd : ''),
+				);
+				if (result.stdout && sampleOption[i]) {
+					sampleOption[i].callback(result.stdout);
+				} else {
+					console.log(result);
+				}
+			});
+			i += 1;
+		}
 
-	// 	response = await program.exec("argument:2 ferdy admin@gmail.com");
-	// 	assertEquals(response.stdout.name, "ferdy");
-	// 	assertEquals(response.stdout.email, "admin@gmail.com");
+		i = 0;
+		for (const command of instance.getAllCommands()) {
+			const info = command.getInformation();
+			if (!info.name.startsWith('data:')) continue;
+			await t.step(info.name, async () => {
+				const result = await instance.exec(
+					info.name + (sampleData[i] ? ' ' + sampleData[i].cmd : ''),
+				);
+				if (result.stdout && sampleData[i]) {
+					sampleData[i].callback(
+						result.stdout.argument,
+						result.stdout.options,
+					);
+				} else {
+					console.log(result);
+				}
+			});
+			i += 1;
+		}
+	});
 
-	// 	response = await program.exec("argument:3 100 344 6402");
-	// 	assertEquals(response.stdout.number, [100, 344, 6402]);
-
-	// 	response = await program.exec("argument:4 tsx");
-	// 	assertEquals(response.stdout.type, "tsx");
-	// });
-	// await t.step("argument with stderr", async () => {
-	// 	response = await program.exec("argument");
-	// 	errorTest.isRequiredArgument(response, "name");
-
-	// 	response = await program.exec("argument:2 ferdy");
-	// 	errorTest.isRequiredArgument(response, "email");
-
-	// 	response = await program.exec("argument:3 no-number");
-	// 	errorTest.isNotTypeArgument(response, "number[0]", "Number")
-
-	// 	response = await program.exec("argument:4 jsx");
-	// 	errorTest.isNotInArgument(response, "type", ["ts", "tsx"])
-	// });
-	// await t.step("option with stdout", async () => {
-	// 	response = await program.exec("option --name ferdy");
-	// 	assertEquals(response.stdout.name, "ferdy");
-
-	// 	response = await program.exec("option:2 -n ferdy");
-	// 	assertEquals(response.stdout.n, "ferdy");
-
-	// 	response = await program.exec("option:3 --number 100");
-	// 	assertEquals(response.stdout.number, 100);
-
-	// 	response = await program.exec("option:4 --type js tsx");
-	// 	assertEquals(response.stdout.type, ["js", "tsx"]);
-
-	// 	response = await program.exec("option:5 --float 100.7 150.9");
-	// 	assertEquals(response.stdout.float, [100.7, 150.9]);
-	// });
-	// await t.step("option with stderr", async () => {
-	// 	response = await program.exec("option");
-	// 	assertEquals(response.stdout, {})
-
-	// 	response = await program.exec("option:2");
-	// 	assertEquals(response.stdout, {})
-
-	// 	response = await program.exec("option:3 --number abc");
-	// 	errorTest.isNotTypeOption(response, "number", "Number")
-
-	// 	response = await program.exec("option:4 --type jsx");
-	// 	errorTest.isNotInOption(response, "type[0]", ["js", "tsx"])
-	// });
-
-	// await t.step("argument and options with stdout", async () => {
-	// 	response = await program.exec("db:delete users 1 10 --dbname db-10 --float 10.2 --arraarra lorem")
-	// 	assertEquals(response.stdout.argument.table, "users")
-	// 	assertEquals(response.stdout.argument.id, [1, 10])
-	// 	assertEquals(response.stdout.option.dbname, "db-10")
-	// 	assertEquals(response.stdout.option.float, 10.2)
-	// 	assertEquals(response.stdout.option.arraarra, "lorem")
-	// })
-	// await t.step("argument and options with stderr", async () => {
-	// 	response = await program.exec("db:delete")
-	// 	errorTest.isRequiredArgument(response, 'table')
-	// 	errorTest.isRequiredArgument(response, 'id')
-	// 	errorTest.isRequiredOption(response, 'dbname')
-	// 	errorTest.isRequiredOption(response, 'float')
-	// 	errorTest.isRequiredOption(response, 'arraarra')
-	// })
-
-	const yt = program.command("yt", description)
-	yt.command("download", description).action(action)
-	yt.command("view", description).action(action)
-	yt.command("share", description).action(action)
-
-	const subscribe = yt.command("subscribe", description)
-	subscribe.command("add", description).action(action)
-
-	await program.exec("yt -h")
+	const sampleArgumentError = [
+		(response: ProgramType.ReturnExec) => {
+			errorTest.isRequiredArgument(response, 'name');
+		},
+		(response: ProgramType.ReturnExec) => {
+			errorTest.isRequiredArgument(response, 'name')
+				.isRequiredArgument(response, 'password');
+		},
+		(response: ProgramType.ReturnExec) => {
+			errorTest.isRequiredArgument(response, 'one')
+				.isRequiredArgument(response, 'two')
+				.isRequiredArgument(response, 'three')
+				.isRequiredArgument(response, 'fourth')
+				.isRequiredArgument(response, 'five');
+		},
+		(response: ProgramType.ReturnExec) => {
+			errorTest.isRequiredArgument(response, 'data');
+		},
+		(response: ProgramType.ReturnExec) => {
+			errorTest.isRequiredArgument(response, 'numeric')
+				.isNotTypeArgument(response, 'numeric', 'Number');
+		},
+		(response: ProgramType.ReturnExec) => {
+			errorTest.isRequiredArgument(response, 'numeric')
+				.isNotTypeArgument(response, 'numeric', 'Float');
+		},
+		(response: ProgramType.ReturnExec) => {
+			errorTest.isRequiredArgument(response, 'id')
+				.isNotTypeArgument(response, 'id', 'Number');
+		},
+		(response: ProgramType.ReturnExec) => {
+			errorTest.isRequiredArgument(response, 'id')
+				.isNotTypeArgument(response, 'id', 'Number');
+		},
+		(response: ProgramType.ReturnExec) => {
+			errorTest.isRequiredArgument(response, 'name');
+		},
+		(response: ProgramType.ReturnExec) => {
+			errorTest.isRequiredArgument(response, 'name');
+		},
+		// deno-lint-ignore no-unused-vars
+		(response: ProgramType.ReturnExec) => {},
+		(response: ProgramType.ReturnExec) => {
+			errorTest.isRequiredArgument(response, 'numeric');
+		},
+		(response: ProgramType.ReturnExec) => {
+			errorTest.isRequiredArgument(response, 'numeric');
+		},
+		(response: ProgramType.ReturnExec) => {
+			errorTest.isRequiredArgument(response, 'data');
+		},
+		(response: ProgramType.ReturnExec) => {
+			errorTest.isRequiredArgument(response, 'format');
+		},
+		(response: ProgramType.ReturnExec) => {
+			errorTest.isRequiredArgument(response, 'format');
+		},
+	];
+	await t.step('Validation STDERR', async (t) => {
+		let i = 0;
+		for (const command of instance.getAllCommands()) {
+			const info = command.getInformation();
+			if (!info.name.startsWith('argument:')) continue;
+			await t.step(info.name, async () => {
+				const result = await instance.exec(info.name);
+				if (sampleArgumentError[i]) sampleArgumentError[i](result);
+			});
+			i += 1;
+		}
+	});
 });
-// deno test -A --watch test/cli/core.test.ts
-// deno test -A --watch test/cli/core.test.ts -- --no-error
