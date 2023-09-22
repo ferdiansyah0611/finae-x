@@ -1,4 +1,3 @@
-// deno-lint-ignore-file
 import { CommandType, OptionType, ValidationType } from '@/types.d.ts';
 import { sprintf } from 'printf';
 import validation from '@/src/helpers/validation.ts';
@@ -37,6 +36,7 @@ export default class Option implements OptionType.Type {
 			results: this.#results,
 		};
 	}
+	// deno-lint-ignore no-explicit-any
 	doValidation(options: any): ValidationType.Stats {
 		const stats: ValidationType.Stats = {
 			success: [],
@@ -87,9 +87,7 @@ export default class Option implements OptionType.Type {
 		// custom validator
 		try {
 			if (this.#config.validator) {
-				stats.fail = stats.fail.concat(
-					this.#config.validator(options[choice]),
-				);
+				options[choice] = this.#config.validator(options[choice]);
 				return stats;
 			}
 		} catch (err) {
@@ -99,6 +97,7 @@ export default class Option implements OptionType.Type {
 		if (!Object.keys(options).length) return stats;
 		// validation
 		if (config.isVariadic) {
+			// deno-lint-ignore no-explicit-any
 			options[choice] = options[choice].map((item: any, index: number) =>
 				validation.action(
 					'Options',
@@ -109,7 +108,7 @@ export default class Option implements OptionType.Type {
 				)
 			);
 		}
-		if (options[choice] !== undefined) {
+		if (!config.isVariadic && options[choice] !== undefined) {
 			options[choice] = validation.action(
 				'Options',
 				name,
@@ -126,8 +125,8 @@ export default class Option implements OptionType.Type {
 			this.#synopsis = '--' + this.#synopsis;
 		}
 
-		let char = this.#synopsis.match(/^-([a-zA-Z]), /);
-		let fullName = this.#synopsis.match(/--([a-zA-Z]+)/);
+		const char = this.#synopsis.match(/^-([a-zA-Z]), /);
+		const fullName = this.#synopsis.match(/--([a-zA-Z0-9\-]+)/);
 		const isRequired = this.#synopsis.match(/<.+>/);
 		const isOptional = this.#synopsis.match(/\[.+\]/);
 		const isVariadic = this.#synopsis.match(/(\[.+\])|(\.\.\.)/);
@@ -167,6 +166,7 @@ export default class Option implements OptionType.Type {
 		this.#config.conflicts = name;
 		return this;
 	}
+	// deno-lint-ignore no-explicit-any
 	implies(data: any): OptionType.Type {
 		this.#config.implies = data;
 		return this;
@@ -175,6 +175,7 @@ export default class Option implements OptionType.Type {
 		this.#config.validator = callback;
 		return this;
 	}
+	// deno-lint-ignore no-explicit-any
 	default(value?: any): OptionType.Type {
 		if (value === undefined) return this;
 		this.#config.default = value;
@@ -196,6 +197,7 @@ export default class Option implements OptionType.Type {
 		this.default(defaults);
 		return this;
 	}
+	// deno-lint-ignore no-explicit-any
 	include(collection: any[]): OptionType.Type {
 		const { results } = this.getInformation();
 
@@ -211,6 +213,7 @@ export default class Option implements OptionType.Type {
 		this.#config.include = collection;
 		return this;
 	}
+	// deno-lint-ignore no-explicit-any
 	exclude(collection: any[]): OptionType.Type {
 		const { results } = this.getInformation();
 

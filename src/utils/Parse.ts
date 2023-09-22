@@ -1,5 +1,3 @@
-// deno-lint-ignore-file
-
 interface CommandLineArgs {
 	_: string[];
 	[key: string]: string | string[] | boolean;
@@ -23,6 +21,7 @@ export default function Parse(args: string[]): CommandLineArgs {
 			result[key] = true;
 		} else if (currentKey) {
 			if (Array.isArray(result[currentKey])) {
+				// deno-lint-ignore ban-ts-comment
 				// @ts-ignore
 				result[currentKey].push(arg);
 			} else if (result[currentKey]) {

@@ -1,14 +1,13 @@
-// deno-lint-ignore-file
-import _ from 'lodash';
 import { sprintf } from 'printf';
-import { CommandType, OptionType, ProgramType } from '@/types.d.ts';
-import { stderr } from '@/src/utils/Errors.ts';
+import { CommandType, HelpType, OptionType, ProgramType } from '@/types.d.ts';
 import Command from '@/src/utils/Command.ts';
 import Parse from '@/src/utils/Parse.ts';
 import Help from '@/src/utils/Help.ts';
 import highlight from '@/src/helpers/highlight.ts';
 import message from '@/src/helpers/message.ts';
 import Option from '@/src/utils/Option.ts';
+import suggest from '@/src/helpers/suggest.ts';
+import stderr from '@/src/helpers/stderr.ts';
 
 class Program implements ProgramType.Type {
 	#name: string;
@@ -18,6 +17,10 @@ class Program implements ProgramType.Type {
 	#setup: ProgramType.Setup = {
 		help: new Option('-h, --help', 'Show the help command'),
 		options: [],
+		errors: [],
+		usage: {
+			name: 'main.ts',
+		},
 	};
 	constructor(name: string, description: string, config: ProgramType.Config) {
 		this.#name = name;
@@ -49,10 +52,19 @@ class Program implements ProgramType.Type {
 	getSetup(): ProgramType.Setup {
 		return this.#setup;
 	}
+	hook(type: ProgramType.HookType, callback: ProgramType.HookCallback): ProgramType.Type {
+		const choice = ['preAction', 'postAction', 'preError', 'postError'];
+		if (!this.#setup.hook) {
+			this.#setup.hook = { preAction: [], postAction: [], preError: [], postError: [] };
+		}
+		if (!choice.includes(type)) throw Error(sprintf('Invalid Hook: Type not in: %s', choice.join(', ')));
+		this.#setup.hook[type].push(callback);
+		return this;
+	}
 	addOption(
 		synopsis: string,
 		description: string,
-		callback?: (cls: OptionType.Type) => any,
+		callback?: (cls: OptionType.Type) => OptionType.Type,
 	): ProgramType.Type {
 		const cls = new Option(synopsis, description);
 		if (callback) callback(cls);
@@ -72,7 +84,8 @@ class Program implements ProgramType.Type {
 		return this;
 	}
 
-	help(stdout: boolean = true): string {
+	showHelp(stdout?: boolean): string {
+		if (stdout === undefined) stdout = true;
 		const help = new Help(
 			this.#name,
 			this.#description,
@@ -87,15 +100,31 @@ class Program implements ProgramType.Type {
 		return result;
 	}
 
-	async exec(shell: string): Promise<ProgramType.ReturnExec> {
-		let errors: string[] = [];
-		const result: number[] = [];
-		const { _: argument, ...options } = Parse(shell.split(' '));
-		const lowerCaseShell = shell.toLowerCase();
-		const response = (stdout: any, stderr: string[] | string | null) => ({
-			stdout,
-			stderr,
-		});
+	error(message: string[] | string): ProgramType.Type {
+		if (Array.isArray(message)) {
+			this.#setup.errors = this.#setup.errors.concat(message);
+		} else {
+			this.#setup.errors.push(message);
+		}
+		return this;
+	}
+
+	usage(name: string): ProgramType.Type {
+		this.#setup.usage = { name };
+		return this;
+	}
+
+	parse(shell: string[] | string): ProgramType.ParseResult {
+		if (typeof shell === 'string') shell = shell.split(' ');
+		const { _: argument, ...options } = Parse(shell);
+		return { argument, options };
+	}
+
+	async exec(shell: string[] | string): Promise<ProgramType.ReturnExec> {
+		this.#clearErrors();
+
+		const { argument, options } = this.parse(shell);
+		const shellStr = typeof shell === 'string' ? shell: shell.join(" ");
 		const isHelp = () => {
 			if (this.#setup.help) {
 				const { results } = this.#setup.help.getInformation();
@@ -103,47 +132,60 @@ class Program implements ProgramType.Type {
 			}
 		};
 		// core command here
-		if (['-v', '--version'].includes(lowerCaseShell)) {
-			let version = this.#config.version ? this.#config.version : '1.0.0';
+		if (options.v || options.version) {
+			const version = this.#config.version ? this.#config.version : '1.0.0';
 			console.log(version);
-			return response(null, null);
+			return this.#response(version, null);
 		}
 		if (!argument.length && isHelp()) {
-			return response(this.help(), null);
+			return this.#response(this.showHelp(), null);
 		}
 
-		for (const command of this.#commands) {
-			const splitFromCommand = command.getInformation().name.split(' ');
-			let counter = 0;
-			for (const index in argument) {
-				if (argument[index] === splitFromCommand[index]) {
-					counter += 1;
-				}
-			}
-			result.push(counter);
-		}
-		// check different
-		if (result.every((num) => num === 0) && this.#config.stderr) {
-			let err = sprintf(message.error.cmdNotFound, shell);
-			this.#config.stderr(err);
-			return response(null, null);
-		}
+		// find distance
+		const potentialCommand = suggest(
+			argument.join(' '),
+			this.#commands.map((item) => item.getInformation().name),
+		);
 
-		const max = Math.max(...new Set(result));
-		const index = result.indexOf(max);
-		const currentCommand = this.#commands[index];
+		const currentCommand = this.#commands[potentialCommand];
 		const information = {
 			info: currentCommand.getInformation(),
 			arguments: currentCommand.getArgument(),
 			options: currentCommand.getOption(),
 		};
-		const newArgument: any = {};
+		const splitName = information.info.name.split(" ");
+		// compare name
+		let count = 0;
+		for(const key of splitName){
+			if (argument.includes(key)) count += 1;
+			else if (count > 0) break;
+		}
+
+		if (count !== splitName.length){
+			let text = sprintf(message.error.cmdNotFound, shellStr);
+			if (this.#config.suggestAfterError) {
+				text += ' ' + sprintf(message.error.suggest, information.info.name);
+			}
+			this.error(text);
+			this.#emitError(null);
+			return this.#response(undefined, null);
+		}
+		// show help if command is same and no have options
+		// if (!Object.keys(options).length) {
+		// 	if (isHelp()) {
+		// 		return this.#response(this.showHelp(), null);
+		// 	}
+		// }
+		// console.log(count, splitName, options);
+
+		
+		const newArgument: {[key: string]: string} = {};
 		const splitFromCommand = information.info.name.split(' ');
 		const potentialArg = argument.filter((arg) => !splitFromCommand.find((split) => split === arg));
 
 		// help
 		if (isHelp()) {
-			return response(currentCommand.showHelp(), null);
+			return this.#response(currentCommand.showHelp(), null);
 		}
 
 		// check argument
@@ -151,8 +193,8 @@ class Program implements ProgramType.Type {
 			const current = information.arguments[i];
 			const nextCallback = (howMuch: number) => (i += howMuch);
 			const stats = current.doValidation(potentialArg, i, nextCallback);
-			errors = errors.concat(stats.fail);
 
+			this.error(stats.fail);
 			if (stats.data) {
 				const { results } = current.getInformation();
 				newArgument[results.fullName] = stats.data;
@@ -164,14 +206,14 @@ class Program implements ProgramType.Type {
 			const { config } = current.getInformation();
 			if (!config.implies) continue;
 			for (const implies of Object.keys(config.implies)) {
-				options[implies] = config.implies[implies];
+				if (!options[implies]) options[implies] = config.implies[implies];
 			}
 		}
 
 		// validation options
 		for (const current of information.options) {
 			const stats = current.doValidation(options);
-			errors = errors.concat(stats.fail);
+			this.error(stats.fail);
 		}
 		// find unknown options
 		for (const key in options) {
@@ -184,28 +226,79 @@ class Program implements ProgramType.Type {
 				}
 			}
 			if (!isValid) {
-				errors.push(sprintf(message.error.optionsUnknown, key));
+				let text = sprintf(message.error.optionsUnknown, key);
+				if (this.#config.suggestAfterError) {
+					const indexSuggest = suggest(
+						argument.join(' '),
+						currentCommand.getOption().map((item) => '--' + item.getInformation().synopsis),
+					);
+					if (indexSuggest >= 0) {
+						text += '. ' +
+							sprintf(
+								message.error.suggest,
+								currentCommand.getOption()[indexSuggest].getInformation().synopsis,
+							);
+					}
+				}
+				this.error(text);
 			}
 		}
 		// show errors
+		const { errors } = this.#setup;
 		if (errors.length) {
-			this.#showError(errors);
-			return response(null, errors);
+			this.#emitError(currentCommand);
+			return this.#response(undefined, null);
 		}
-
-		let progress = await currentCommand.execute({
+		// run preAction hook
+		this.#emitHook('preAction', currentCommand);
+		// run action
+		const progress: CommandType.ReturnExecution = await currentCommand.execute({
 			argument: Object.keys(newArgument).length ? newArgument : null,
 			options,
 		});
-		if (progress && progress.isCore && progress.stderr) {
-			return response(null, progress.stderr);
+		// run postAction hook
+		this.#emitHook('postAction', currentCommand);
+		// if error in progress action
+		if (typeof progress === "object" && progress['isFailed']) {
+			return this.#response(undefined, null);
+		} else {
+			return this.#response(progress, null);
 		}
-		return response(progress, null);
 	}
 
-	#showError(error: any) {
+	makeSectionHelp(position: HelpType.Position, name: string, key: string|null, data: string[][]): ProgramType.Type {
+	    if (!this.#setup.sectionHelp) this.#setup.sectionHelp = {
+	    	afterArgument: []
+	    };
+	    this.#setup.sectionHelp[position]
+	    	.push({
+	    		name,
+	    		key,
+	    		data: data.map((item) => ({
+	    			title: item[0], description: item[1] 
+	    		}))
+	    	})
+	    return this;
+	}
+	#response(stdout: CommandType.ReturnExecution, stderr: string[] | string | null) {
+		stderr = stderr ? stderr : (this.#setup.errors.length ? this.#setup.errors : null);
+		return { stdout, stderr };
+	}
+	#clearErrors() {
+		this.#setup.errors = [];
+	}
+	#emitError(current: CommandType.Type | null) {
 		if (!this.#config.stderr) return;
-		this.#config.stderr(error);
+		this.#emitHook('preError', current);
+		this.#config.stderr(this.#setup.errors);
+		this.#emitHook('postError', current);
+	}
+	#emitHook(key: ProgramType.HookType, current: CommandType.Type | null) {
+		if (this.#setup.hook && this.#setup.hook[key]) {
+			for (const callback of this.#setup.hook[key]) {
+				callback(current);
+			}
+		}
 	}
 }
 

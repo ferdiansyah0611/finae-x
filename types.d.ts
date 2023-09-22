@@ -12,11 +12,7 @@ export namespace ProgramType {
 		 * @param config - Optional configuration for the command.
 		 * @returns The created command.
 		 */
-		command(
-			name: string,
-			description: string,
-			config?: CommandType.Config,
-		): CommandType.Type;
+		command(name: string, description: string, config?: CommandType.Config): CommandType.Type;
 		/**
 		 * Retrieves all commands defined in the program.
 		 * @returns An array of all commands.
@@ -37,13 +33,13 @@ export namespace ProgramType {
 		 * @param stdout - Indicates whether to output the help message to stdout.
 		 * @returns The generated help message.
 		 */
-		help(stdout: boolean): string;
+		showHelp(stdout?: boolean): string;
 		/**
 		 * Executes a shell command.
 		 * @param shell - The shell command to execute.
 		 * @returns The result of the shell command execution.
 		 */
-		exec(shell: string): Promise<ReturnExec>;
+		exec(shell: string[] | string): Promise<ReturnExec>;
 		/**
 		 * change command help, pass false to disable help
 		 */
@@ -51,12 +47,33 @@ export namespace ProgramType {
 		/**
 		 * add options globally
 		 */
-		addOption(
-			synopsis: string,
-			description: string,
-			callback?: (cls: OptionType.Type) => any,
-		): Type;
+		addOption(synopsis: string, description: string, callback?: (cls: OptionType.Type) => OptionType.Type): Type;
+		/**
+		 * add hook event
+		 */
+		hook(type: HookType, callback: HookCallback): Type;
+		/**
+		 * parse args
+		 */
+		parse(shell: string[] | string): ParseResult;
+		/**
+		 * append message errors to the program
+		 */
+		error(message: string[] | string): Type;
+		/**
+		 * customize your usage description
+		 */
+		usage(name: string): Type;
+
+		makeSectionHelp(position: HelpType.Position, name: string, key: string|null, data: string[][]): Type;
 	}
+
+	type ParseResult = {
+		argument: string[];
+		options: {
+			[key: string]: string | string[] | boolean;
+		};
+	};
 	/**
 	 * Represents information about a program.
 	 */
@@ -71,6 +88,7 @@ export namespace ProgramType {
 	type Config = {
 		version?: string;
 		stderr?: (error: any[] | any) => any;
+		suggestAfterError?: boolean;
 	};
 	/**
 	 * Represents the result of executing a shell command.
@@ -85,7 +103,24 @@ export namespace ProgramType {
 	type Setup = {
 		options: OptionType.Type[];
 		help: OptionType.Type | null;
+		errors: string[];
+		usage: {
+			name: string;
+		};
+		hook?: {
+			[key: string]: HookCallback[];
+			preAction: HookCallback[];
+			postAction: HookCallback[];
+			preError: HookCallback[];
+			postError: HookCallback[];
+		};
+		sectionHelp?: {
+			[key: string]: HelpType.ItemSection[];
+		};
 	};
+
+	type HookType = 'preAction' | 'postAction' | 'preError' | 'postError';
+	type HookCallback = (command: CommandType.Type | null) => void;
 }
 
 export namespace CommandType {
@@ -100,11 +135,7 @@ export namespace CommandType {
 		 * @param config - Optional configuration for the command.
 		 * @returns The created command.
 		 */
-		command(
-			name: string,
-			description: string,
-			config?: CommandType.Config,
-		): CommandType.Type;
+		command(name: string, description: string, config?: CommandType.Config): CommandType.Type;
 		/**
 		 * Adds an argument to the command.
 		 * @param name - The name of the argument.
@@ -112,11 +143,7 @@ export namespace CommandType {
 		 * @param callback - Optional callback function for additional argument configuration.
 		 * @returns The updated command.
 		 */
-		argument(
-			name: string,
-			description: string,
-			callback?: (cls: ArgumentType.Type) => any,
-		): CommandType.Type;
+		argument(name: string, description: string, callback?: (cls: ArgumentType.Type) => ArgumentType.Type): CommandType.Type;
 		/**
 		 * Adds an option to the command.
 		 * @param synopsis - The synopsis of the option.
@@ -124,11 +151,7 @@ export namespace CommandType {
 		 * @param callback - Optional callback function for additional option configuration.
 		 * @returns The updated command.
 		 */
-		option(
-			synopsis: string,
-			description: string,
-			callback?: (cls: OptionType.Type) => any,
-		): CommandType.Type;
+		option(synopsis: string, description: string, callback?: (cls: OptionType.Type) => OptionType.Type): CommandType.Type;
 		/**
 		 * Sets the action to be executed when the command is invoked.
 		 * @param callback - The callback function to be executed.
@@ -158,10 +181,14 @@ export namespace CommandType {
 		getOption(): OptionType.Type[];
 		/**
 		 * Retrieves the nested commands defined in the command.
-		 * @param onlyKey - Indicates whether to include only the keys of nested commands.
 		 * @returns An array of nested commands.
 		 */
-		getNested(onlyKey?: boolean): CommandType.Type[];
+		getNested(): CommandType.Type[] | number[];
+		/**
+		 * Retrieves the key nested commands defined in the command.
+		 * @returns An array of number nested commands.
+		 */
+		getNestedKey(): number[];
 		/**
 		 * Generates the help message for the command.
 		 * @param stdout - Indicates whether to output the help message to stdout.
@@ -188,6 +215,8 @@ export namespace CommandType {
 	 * Represents a callback function for command execution.
 	 */
 	type ActionCallback = (argument?: any, options?: any) => any;
+
+	type ReturnExecution = { [key: string]: string|boolean } | string | undefined;
 }
 
 export namespace ArgumentType {
@@ -205,9 +234,7 @@ export namespace ArgumentType {
 		 * @param callback - The validator callback function.
 		 * @returns The updated argument.
 		 */
-		validator(
-			callback: ValidationType.CallbackValidator,
-		): ArgumentType.Type;
+		validator(callback: ValidationType.CallbackValidator): ArgumentType.Type;
 		/**
 		 * Sets a default value for the argument.
 		 * @param value - The default value.
@@ -221,11 +248,7 @@ export namespace ArgumentType {
 		 * @param nextCallback - The callback function to continue the validation process.
 		 * @returns Validation statistics.
 		 */
-		doValidation(
-			argument: string[],
-			index: number,
-			nextCallback: (howMuch: number) => any,
-		): ValidationType.Stats;
+		doValidation(argument: string[], index: number, nextCallback: (howMuch: number) => any): ValidationType.Stats;
 		/**
 		 * Sets the argument type as string.
 		 * @param defaults - Optional default value for the argument.
@@ -410,6 +433,7 @@ export namespace OptionType {
 }
 
 export namespace HelpType {
+	type Position = "afterArgument" | "afterCommand" | "afterOption";
 	/**
 	 * Represents a type of help.
 	 */
@@ -424,7 +448,24 @@ export namespace HelpType {
 		commands?: CommandType.Type[];
 		options?: OptionType.Type[];
 		arguments?: ArgumentType.Type[];
+		afterArgument?: { title: string; description: string; }[];
 	};
+	/**
+	 * List of synopsis/name length 
+	 */
+	type CountCollection = {
+		[key: string]: number[];
+		arguments: number[];
+		commands: number[];
+		options: number[];
+		afterArgument: number[];
+	};
+
+	type ItemSection = {
+		name: string;
+		key: string | null;
+		data: { title: string; description: string; }[];
+	}
 }
 
 export namespace ValidationType {

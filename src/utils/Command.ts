@@ -1,4 +1,3 @@
-// deno-lint-ignore-file
 import { ArgumentType, CommandType, OptionType, ProgramType } from '@/types.d.ts';
 import { sprintf } from 'printf';
 import Option from '@/src/utils/Option.ts';
@@ -16,7 +15,7 @@ class Command implements CommandType.Type {
 
 	#arguments: ArgumentType.Type[] = [];
 	#options: OptionType.Type[] = [];
-	#nested: any[] = [];
+	#nested: number[] = [];
 
 	constructor(
 		program: ProgramType.Type,
@@ -43,12 +42,14 @@ class Command implements CommandType.Type {
 	getOption(): OptionType.Type[] {
 		return this.#options;
 	}
-	getNested(onlyKey?: boolean): CommandType.Type[] {
+	getNested(): CommandType.Type[] {
 		if (!this.#nested.length) return [];
-		if (onlyKey) return this.#nested;
 		return this.#program.getAllCommands().filter((_, index) => this.#nested.includes(index));
 	}
-
+	getNestedKey(): number[] {
+	    return this.#nested;
+	}
+	
 	command(
 		name: string,
 		description: string,
@@ -66,7 +67,7 @@ class Command implements CommandType.Type {
 	argument(
 		synopsis: string,
 		description: string,
-		callback?: (cls: ArgumentType.Type) => any,
+		callback?: (cls: ArgumentType.Type) => ArgumentType.Type,
 	): CommandType.Type {
 		const cls = new Argument(synopsis, description);
 		if (callback) callback(cls);
@@ -77,7 +78,7 @@ class Command implements CommandType.Type {
 	option(
 		synopsis: string,
 		description: string,
-		callback?: (cls: OptionType.Type) => any,
+		callback?: (cls: OptionType.Type) => OptionType.Type,
 	): CommandType.Type {
 		const cls = new Option(synopsis, description, this);
 		if (callback) callback(cls);
@@ -91,6 +92,7 @@ class Command implements CommandType.Type {
 		return this;
 	}
 
+	// deno-lint-ignore no-explicit-any
 	async execute(data?: any): Promise<any> {
 		if (this.#action) {
 			if (data.argument && Object.keys(data.argument) && data.options) {
@@ -100,14 +102,14 @@ class Command implements CommandType.Type {
 			} else if (data.options) return await this.#action(data.options);
 			else await this.#action();
 		} else {
-			const { stderr } = this.#program.getInformation().config;
 			const err = sprintf(message.error.actionNotFound, this.#name);
-			if (stderr) stderr(err);
-			return { stderr: err, isCore: true };
+			this.#program.error(err);
+			return { isFailed: true };
 		}
 	}
 
-	showHelp(stdout: boolean = true): string {
+	showHelp(stdout?: boolean): string {
+		if (stdout === undefined) stdout = true;
 		const infoProgram = this.#program.getInformation();
 		const help = new Help(
 			this.#name,

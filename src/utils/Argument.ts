@@ -1,4 +1,3 @@
-// deno-lint-ignore-file no-explicit-any
 import { ArgumentType, ValidationType } from '@/types.d.ts';
 import validation from '@/src/helpers/validation.ts';
 import { sprintf } from 'printf';
@@ -32,7 +31,7 @@ export default class Argument implements ArgumentType.Type {
 	doValidation(
 		argument: string[],
 		index: number,
-		nextCallback: (howMuch: number) => any,
+		nextCallback: (howMuch: number) => unknown,
 	): ValidationType.Stats {
 		const stats: ValidationType.Stats = {
 			success: [],
@@ -53,10 +52,7 @@ export default class Argument implements ArgumentType.Type {
 		// custom validator
 		try {
 			if (this.#config.validator) {
-				stats.fail = stats.fail.concat(
-					this.#config.validator(argument[index]),
-				);
-				stats.data = argument[index];
+				stats.data = this.#config.validator(argument[index]);
 				return stats;
 			}
 		} catch (err) {
@@ -67,7 +63,7 @@ export default class Argument implements ArgumentType.Type {
 		if (config.isVariadic) {
 			stats.data = argument
 				.slice(index)
-				.map((item: any, currentIndex: number) =>
+				.map((item: string, currentIndex: number) =>
 					validation.action(
 						'Arguments',
 						`${name}[${currentIndex}]`,
@@ -111,6 +107,7 @@ export default class Argument implements ArgumentType.Type {
 		this.#config.validator = callback;
 		return this;
 	}
+	// deno-lint-ignore no-explicit-any
 	default(value?: any): ArgumentType.Type {
 		if (value === undefined) return this;
 		this.#config.default = value;
@@ -136,7 +133,7 @@ export default class Argument implements ArgumentType.Type {
 		this.default(defaults);
 		return this;
 	}
-	include(collection: any[]): ArgumentType.Type {
+	include(collection: string[] | number[]): ArgumentType.Type {
 		const { results } = this.getInformation();
 
 		if (!collection.length) {
@@ -151,7 +148,7 @@ export default class Argument implements ArgumentType.Type {
 		this.#config.include = collection;
 		return this;
 	}
-	exclude(collection: any[]): ArgumentType.Type {
+	exclude(collection: string[] | number[]): ArgumentType.Type {
 		const { results } = this.getInformation();
 
 		if (!collection.length) {

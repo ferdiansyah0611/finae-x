@@ -1,7 +1,10 @@
-// deno-lint-ignore-file
-import { cyan } from 'colors';
+import { blue, cyan } from 'colors';
 import { sprintf } from 'printf';
 import { ArgumentType, CommandType, HelpType, OptionType, ProgramType } from '@/types.d.ts';
+
+// deno-lint-ignore no-explicit-any
+type ItemType = ArgumentType.Type | CommandType.Type | OptionType.Type | any;
+type SectionCallbackReturn = { title: string; description: string };
 
 export default class Help implements HelpType.Type {
 	#program: ProgramType.Type;
@@ -26,7 +29,11 @@ export default class Help implements HelpType.Type {
 	compile(): string {
 		const setup = this.#program.getSetup();
 		const { collection } = this.#info;
-		const usagePattern = /('command\.js)/;
+
+		let usagePattern = /('command\.js)/;
+		if (setup.usage.name) {
+			usagePattern = new RegExp('(\'' + setup.usage.name + ')');
+		}
 
 		collection.options = collection.options || [];
 		if (setup.help) {
@@ -42,13 +49,13 @@ export default class Help implements HelpType.Type {
 		let appendText = '\n';
 		let text = '';
 		text += '$name v$version — $description\n\n';
-		text += 'Usage: \'command.js\'';
+		text += `Usage: \'${setup.usage.name}\'`;
 		text = text.replaceAll('$name', this.#info.name).replaceAll(
 			'$description',
 			this.#info.description,
 		).replaceAll('$version', this.#info.version);
 
-		const len: any = {
+		const len: HelpType.CountCollection = {
 			arguments: [],
 			commands: [],
 			options: [],
@@ -69,41 +76,64 @@ export default class Help implements HelpType.Type {
 			text = text.replace(usagePattern, '$1 ' + this.#info.name);
 		}
 
-		let nested: any[] = [];
-		let columns = 100;
-		try {
-			columns = Deno.consoleSize().columns;
-		} catch (e) {}
+		let nested: number[] = [];
+		const columns = this.getColumns();
 
 		const allLength = [...len.arguments, ...len.commands, ...len.options];
 		const max = Math.max(...allLength);
-		const makeSection = <T>(
+		const makeSection = (
 			key: string,
 			selectorCallback: (
-				item: T,
-			) => { title: string; description: string },
+				item: ItemType,
+			) => SectionCallbackReturn,
 		) => {
-			let result = collection[key]
-				.map((item: T, index: number) => {
-					// @ts-ignore
+			const isCore = ["arguments", "commands", "options"].includes(key);
+			let result: string[]|string = collection[key]
+				.map((item: ItemType, index: number) => {
 					const selector = selectorCallback(item);
-					let description = selector.description;
-					const remain = max - len[key][index];
-					const title = cyan(selector.title) + ' '.repeat(remain) +
-						'\t';
-					const lineLength = title.length + 2 + description.length;
-					if (lineLength > columns) {
-						description = description.slice(
-							0,
-							description.length - (lineLength - columns),
-						) + '...';
+					if (key === "commands" && this.#info.isCommand) {
+						selector.title = selector.title.replace(this.#info.name, '') + " ".repeat(this.#info.name.length);
 					}
-					return sprintf('  %s %s', title, description);
+
+					const remain = max - len[key][index];
+					const title = cyan(selector.title) + ' '.repeat(remain) + '\t';
+					// wrapping text
+					const groupText = title + selector.description;
+					const oneColumn = () => '\n' + ' '.repeat(max + 2) + '\t';
+					const twoColumn = (curentValue: string): string => {
+						let value = '';
+						for (let i = 0; i < curentValue.length; i++) {
+							value += curentValue[i];
+							if (Number.isInteger(i / (columns - title.length)) && i !== 0) {
+								value += oneColumn();
+							}
+						}
+						return value;
+					}
+					let newText = twoColumn(groupText);
+					if (isCore) {
+						const config = item.getInformation().config;
+						if (config.default) {
+							newText += oneColumn();
+							newText += twoColumn(sprintf('%s %s', blue("default  :"), config.default))
+						}
+						if (config.include && config.include.length) {
+							newText += oneColumn();
+							newText += twoColumn(sprintf('%s [%s]', blue("includes :"), config.include.join(", ")))
+						}
+						if (config.exclude && config.exclude.length) {
+							newText += oneColumn();
+							newText += twoColumn(sprintf('%s [%s]', blue("excludes :"), config.exclude.join(", ")))
+						}
+					}
+					return sprintf('  %s%s', newText, groupText.length > columns ? "\n": "");
 				});
-			if (key === 'commands') {
-				result = result.filter((_: any, index: number) => !nested.includes(index));
+			if (Array.isArray(result)) {
+				if (key === 'commands') {
+					result = result.filter((_, index: number) => !nested.includes(index));
+				}
+				result = result.join('\n');
 			}
-			result = result.join('\n');
 			if (result.length) {
 				appendText += '\n' + (key[0].toUpperCase() + key.slice(1)) +
 					':\n\n' +
@@ -112,33 +142,98 @@ export default class Help implements HelpType.Type {
 		};
 
 		if (collection.arguments) {
-			makeSection<ArgumentType.Type>('arguments', (item) => {
-				let { synopsis, description } = item.getInformation();
+			makeSection('arguments', (item: ArgumentType.Type) => {
+				const { synopsis, description } = item.getInformation();
 				return { title: synopsis, description };
 			});
 		}
 		if (collection.commands) {
-			makeSection<CommandType.Type>('commands', (item) => {
-				const currNested = item.getNested(true);
+			makeSection('commands', (item: CommandType.Type) => {
+				const currNested = item.getNestedKey();
 				if (currNested.length) {
 					nested = nested.concat(currNested);
 				}
-				let { name, description } = item.getInformation();
-
-				if (this.#info.isCommand) {
-					name = name.replace(this.#info.name, '');
-				}
+				const { name, description } = item.getInformation();
 				return { title: name, description };
 			});
 		}
 		if (collection.options) {
-			makeSection<OptionType.Type>('options', (item) => {
-				let { synopsis, description } = item.getInformation();
+			makeSection('options', (item: OptionType.Type) => {
+				const { synopsis, description } = item.getInformation();
 				return { title: synopsis, description };
 			});
 		}
 
 		text += appendText;
 		return text;
+	}
+
+	// makeSection(key: string, selectorCallback: (item: ItemType) => SectionCallbackReturn): HelpType.Type {
+	// 	const isCore = this.#isCore(key);
+	// 	const columns = this.getColumns();
+	// 	const oneColumn = () => '\n' + ' '.repeat(max + 2) + '\t';
+	// 	const twoColumn = (oneColValue: string, curentValue: string): string => {
+	// 		let value = '';
+	// 		for (let i = 0; i < curentValue.length; i++) {
+	// 			value += curentValue[i];
+	// 			if (Number.isInteger(i / (columns - oneColValue.length)) && i !== 0) {
+	// 				value += oneColumn();
+	// 			}
+	// 		}
+	// 		return value;
+	// 	}
+	// 	let result: string[]|string = collection[key]
+	// 		.map((item: ItemType, index: number) => {
+	// 			const selector = selectorCallback(item);
+	// 			if (key === "commands" && this.#info.isCommand) {
+	// 				selector.title = selector.title.replace(this.#info.name, '') + " ".repeat(this.#info.name.length);
+	// 			}
+	// 			const remain = max - len[key][index];
+	// 			const title = cyan(selector.title) + ' '.repeat(remain) + '\t';
+	// 			// wrapping text
+	// 			const groupText = title + selector.description;
+	// 			let newText = twoColumn(title, groupText);
+	// 			if (isCore) {
+	// 				const config = item.getInformation().config;
+	// 				if (config.default) {
+	// 					newText += oneColumn();
+	// 					newText += twoColumn(title, sprintf('%s %s', blue("default  :"), config.default))
+	// 				}
+	// 				if (config.include && config.include.length) {
+	// 					newText += oneColumn();
+	// 					newText += twoColumn(title, sprintf('%s [%s]', blue("includes :"), config.include.join(", ")))
+	// 				}
+	// 				if (config.exclude && config.exclude.length) {
+	// 					newText += oneColumn();
+	// 					newText += twoColumn(title, sprintf('%s [%s]', blue("excludes :"), config.exclude.join(", ")))
+	// 				}
+	// 			}
+	// 			return sprintf('  %s%s', newText, groupText.length > columns ? "\n": "");
+	// 		});
+	// 	if (Array.isArray(result)) {
+	// 		if (key === 'commands') {
+	// 			result = result.filter((_, index: number) => !nested.includes(index));
+	// 		}
+	// 		result = result.join('\n');
+	// 	}
+	// 	if (result.length) {
+	// 		appendText += '\n' + (key[0].toUpperCase() + key.slice(1)) +
+	// 			':\n\n' +
+	// 			result + '\n';
+	// 	}
+	// 	return this;
+	// }
+
+	getColumns(): number {
+		let columns = 100;
+		try {
+			columns = Deno.consoleSize().columns;
+		} catch (_e) {
+			columns = 100;
+		}
+		return columns;
+	}
+	#isCore(key: string): boolean {
+		return ["arguments", "commands", "options"].includes(key);
 	}
 }
