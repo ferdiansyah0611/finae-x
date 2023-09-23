@@ -10,15 +10,22 @@ class FactoryMessage implements TestType.ErrorMessage {
 	constructor(instance: TestType.Instance) {
 		this.instance = instance;
 	}
-	isRequired(response: ProgramType.ReturnExec, name: string) {
-		assertEquals(
-			response.stderr?.includes(
-				sprintf(message.error.isRequired, this.instance, name),
-			),
-			true,
-		);
+	isRequired(response: ProgramType.ReturnExec, name: string[]|string): TestType.ErrorMessage {
+		if (Array.isArray(name)) {
+			for(const value of name) {
+				this.isRequired(response, value);
+			}
+		} else {
+			assertEquals(
+				response.stderr?.includes(
+					sprintf(message.error.isRequired, this.instance, name),
+				),
+				true,
+			);
+		}
+		return this;
 	}
-	isExclude(response: ProgramType.ReturnExec, name: string, arr: any[]) {
+	isExclude(response: ProgramType.ReturnExec, name: string, arr: any[]): TestType.ErrorMessage {
 		assertEquals(
 			response.stderr?.includes(
 				sprintf(
@@ -30,8 +37,9 @@ class FactoryMessage implements TestType.ErrorMessage {
 			),
 			true,
 		);
+		return this;
 	}
-	notInclude(response: ProgramType.ReturnExec, name: string, arr: any[]) {
+	notInclude(response: ProgramType.ReturnExec, name: string, arr: any[]): TestType.ErrorMessage {
 		assertEquals(
 			response.stderr?.includes(
 				sprintf(
@@ -43,95 +51,18 @@ class FactoryMessage implements TestType.ErrorMessage {
 			),
 			true,
 		);
+		return this;
 	}
-	notType(response: ProgramType.ReturnExec, name: string, type: string) {
+	notType(response: ProgramType.ReturnExec, name: string, type: string): TestType.ErrorMessage {
 		assertEquals(
 			response.stderr?.includes(
 				sprintf(message.error.isNotType, this.instance, name, type),
 			),
 			true,
 		);
+		return this;
 	}
 }
 
 export const ErrorArgument = new FactoryMessage('Arguments');
 export const ErrorOption = new FactoryMessage('Options');
-
-const errorTest = {
-	isRequiredArgument(response: ProgramType.ReturnExec, name: string) {
-		assertEquals(
-			response.stderr?.includes(
-				sprintf(message.error.isRequired, 'Arguments', name),
-			),
-			true,
-		);
-		return this;
-	},
-	isNotTypeArgument(
-		response: ProgramType.ReturnExec,
-		name: string,
-		type: string,
-	) {
-		assertEquals(
-			response.stderr?.includes(
-				sprintf(message.error.isNotType, 'Arguments', name, type),
-			),
-			true,
-		);
-		return this;
-	},
-	isNotInArgument(
-		response: ProgramType.ReturnExec,
-		name: string,
-		// deno-lint-ignore no-explicit-any
-		arr: any[],
-	) {
-		assertEquals(
-			response.stderr?.includes(
-				sprintf(
-					message.error.isNotIn,
-					'Arguments',
-					name,
-					arr.join(', '),
-				),
-			),
-			true,
-		);
-		return this;
-	},
-
-	isRequiredOption(response: ProgramType.ReturnExec, name: string) {
-		assertEquals(
-			response.stderr?.includes(
-				sprintf(message.error.isRequired, 'Options', name),
-			),
-			true,
-		);
-		return this;
-	},
-	isNotTypeOption(
-		response: ProgramType.ReturnExec,
-		name: string,
-		type: string,
-	) {
-		assertEquals(
-			response.stderr?.includes(
-				sprintf(message.error.isNotType, 'Options', name, type),
-			),
-			true,
-		);
-		return this;
-	},
-	// deno-lint-ignore no-explicit-any
-	isNotInOption(response: ProgramType.ReturnExec, name: string, arr: any[]) {
-		assertEquals(
-			response.stderr?.includes(
-				sprintf(message.error.isNotIn, 'Options', name, arr.join(', ')),
-			),
-			true,
-		);
-		return this;
-	},
-};
-
-export { errorTest };

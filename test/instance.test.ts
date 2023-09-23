@@ -8,7 +8,7 @@ Deno.stdout.write(
 
 const description = 'this is description';
 const config: any = {};
-if (Deno.args.indexOf('--no-error') !== -1) config.stderr = () => {};
+config.stderr = () => {};
 
 const instance: ProgramType.Type = new Program('Core CLI', description, config);
 const actionArgument = (argument: any) => {
@@ -20,8 +20,8 @@ const actionOption = (options: any) => {
 const actionAll = (argument: any, options: any) => {
 	return { argument, options };
 };
-const customValidator = (value: string) => {
-	if (value && value.startsWith('xxx')) instance.error('Word not allowed');
+const customValidator = (value: number|string) => {
+	if (typeof value === "string" && value.startsWith('xxx')) instance.error('Word not allowed');
 	return value;
 };
 

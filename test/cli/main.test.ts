@@ -1,6 +1,6 @@
 // deno-lint-ignore-file no-explicit-any
 import { assertEquals } from 'https://deno.land/std@0.201.0/assert/assert_equals.ts';
-import { errorTest } from '@/test/Test.ts';
+import { ErrorArgument } from '@/test/Test.ts';
 import instance from '@/test/instance.test.ts';
 import { ProgramType } from '@/types.d.ts';
 
@@ -283,59 +283,50 @@ Deno.test('Core CLI', async (t) => {
 
 	const sampleArgumentError = [
 		(response: ProgramType.ReturnExec) => {
-			errorTest.isRequiredArgument(response, 'name');
+			ErrorArgument.isRequired(response, 'name');
 		},
 		(response: ProgramType.ReturnExec) => {
-			errorTest.isRequiredArgument(response, 'name')
-				.isRequiredArgument(response, 'password');
+			ErrorArgument.isRequired(response, ['name', 'password'])
 		},
 		(response: ProgramType.ReturnExec) => {
-			errorTest.isRequiredArgument(response, 'one')
-				.isRequiredArgument(response, 'two')
-				.isRequiredArgument(response, 'three')
-				.isRequiredArgument(response, 'fourth')
-				.isRequiredArgument(response, 'five');
+			ErrorArgument.isRequired(response, ['one', 'two', 'three', 'fourth', 'five'])
 		},
 		(response: ProgramType.ReturnExec) => {
-			errorTest.isRequiredArgument(response, 'data');
+			ErrorArgument.isRequired(response, 'data');
 		},
 		(response: ProgramType.ReturnExec) => {
-			errorTest.isRequiredArgument(response, 'numeric')
-				.isNotTypeArgument(response, 'numeric', 'Number');
+			ErrorArgument.isRequired(response, 'numeric').notType(response, 'numeric', 'Number')
 		},
 		(response: ProgramType.ReturnExec) => {
-			errorTest.isRequiredArgument(response, 'numeric')
-				.isNotTypeArgument(response, 'numeric', 'Float');
+			ErrorArgument.isRequired(response, 'numeric').notType(response, 'numeric', 'Float');
 		},
 		(response: ProgramType.ReturnExec) => {
-			errorTest.isRequiredArgument(response, 'id')
-				.isNotTypeArgument(response, 'id', 'Number');
+			ErrorArgument.isRequired(response, 'id').notType(response, 'id', 'Number');
 		},
 		(response: ProgramType.ReturnExec) => {
-			errorTest.isRequiredArgument(response, 'id')
-				.isNotTypeArgument(response, 'id', 'Number');
+			ErrorArgument.isRequired(response, 'id').notType(response, 'id', 'Number');
 		},
 		(response: ProgramType.ReturnExec) => {
-			errorTest.isRequiredArgument(response, 'name');
+			ErrorArgument.isRequired(response, 'name');
 		},
 		(response: ProgramType.ReturnExec) => {
-			errorTest.isRequiredArgument(response, 'name');
+			ErrorArgument.isRequired(response, 'name');
 		},
 		(_response: ProgramType.ReturnExec) => {},
 		(response: ProgramType.ReturnExec) => {
-			errorTest.isRequiredArgument(response, 'numeric');
+			ErrorArgument.isRequired(response, 'numeric');
 		},
 		(response: ProgramType.ReturnExec) => {
-			errorTest.isRequiredArgument(response, 'numeric');
+			ErrorArgument.isRequired(response, 'numeric');
 		},
 		(response: ProgramType.ReturnExec) => {
-			errorTest.isRequiredArgument(response, 'data');
+			ErrorArgument.isRequired(response, 'data');
 		},
 		(response: ProgramType.ReturnExec) => {
-			errorTest.isRequiredArgument(response, 'format');
+			ErrorArgument.isRequired(response, 'format');
 		},
 		(response: ProgramType.ReturnExec) => {
-			errorTest.isRequiredArgument(response, 'format');
+			ErrorArgument.isRequired(response, 'format');
 		},
 	];
 	await t.step('Validation STDERR', async (t) => {
