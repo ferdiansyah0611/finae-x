@@ -29,7 +29,7 @@ export default class Argument implements ArgumentType.Type {
 		};
 	}
 	doValidation(
-		argument: string[],
+		argument: string[] | number[],
 		index: number,
 		nextCallback: (howMuch: number) => unknown,
 	): ValidationType.Stats {
@@ -63,7 +63,7 @@ export default class Argument implements ArgumentType.Type {
 		if (config.isVariadic) {
 			stats.data = argument
 				.slice(index)
-				.map((item: string, currentIndex: number) =>
+				.map((item: string | number, currentIndex: number) =>
 					validation.action(
 						'Arguments',
 						`${name}[${currentIndex}]`,

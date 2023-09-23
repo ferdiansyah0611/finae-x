@@ -16,6 +16,12 @@ class Command implements CommandType.Type {
 	#arguments: ArgumentType.Type[] = [];
 	#options: OptionType.Type[] = [];
 	#nested: number[] = [];
+	// deno-lint-ignore no-explicit-any
+	#unknownOption: any;
+	// deno-lint-ignore no-explicit-any
+	arg: any[] = [];
+	// deno-lint-ignore no-explicit-any
+	opt: any = {};
 
 	constructor(
 		program: ProgramType.Type,
@@ -47,9 +53,9 @@ class Command implements CommandType.Type {
 		return this.#program.getAllCommands().filter((_, index) => this.#nested.includes(index));
 	}
 	getNestedKey(): number[] {
-	    return this.#nested;
+		return this.#nested;
 	}
-	
+
 	command(
 		name: string,
 		description: string,
@@ -88,18 +94,20 @@ class Command implements CommandType.Type {
 	}
 
 	action(callback: CommandType.ActionCallback): CommandType.Type {
-		this.#action = callback;
+		this.#action = callback.bind(this);
 		return this;
 	}
 
 	// deno-lint-ignore no-explicit-any
 	async execute(data?: any): Promise<any> {
 		if (this.#action) {
+			this.arg = data.argument || [];
+			this.opt = data.options || {};
 			if (data.argument && Object.keys(data.argument) && data.options) {
-				return await this.#action(data.argument, data.options);
+				return await this.#action(data.argument, data.options, this);
 			} else if (data.argument && Object.keys(data.argument)) {
-				return await this.#action(data.argument);
-			} else if (data.options) return await this.#action(data.options);
+				return await this.#action(data.argument, this);
+			} else if (data.options) return await this.#action(data.options, this);
 			else await this.#action();
 		} else {
 			const err = sprintf(message.error.actionNotFound, this.#name);
@@ -121,11 +129,27 @@ class Command implements CommandType.Type {
 				commands: this.getNested(),
 			},
 			this.#program,
+			this,
 			true,
 		);
 		const result = highlight(help.compile());
 		if (stdout) console.log(result);
 		return result;
+	}
+
+	// deno-lint-ignore no-inferrable-types
+	allowUnknownOption(isActive: boolean = true): CommandType.Type {
+		this.#config.isAllowUnknown = isActive;
+		return this;
+	}
+	// deno-lint-ignore no-explicit-any
+	setUnknownOption(data: any): CommandType.Type {
+		this.#unknownOption = data;
+		return this;
+	}
+	// deno-lint-ignore no-explicit-any
+	getUnknownOption(): any {
+		return this.#unknownOption;
 	}
 }
 

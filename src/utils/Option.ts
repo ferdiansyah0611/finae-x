@@ -41,6 +41,7 @@ export default class Option implements OptionType.Type {
 		const stats: ValidationType.Stats = {
 			success: [],
 			fail: [],
+			data: options,
 		};
 		const { config, results } = this.getInformation();
 		const choice = options[results.fullName] ? results.fullName : results.char || results.fullName;

@@ -2,7 +2,15 @@
 import { ProgramType } from '@/types.d.ts';
 import { Program } from '@/mod.ts';
 
+Deno.stdout.write(
+	new TextEncoder().encode('\x1b[2J'),
+);
+
 const description = 'this is description';
+const config: any = {};
+if (Deno.args.indexOf('--no-error') !== -1) config.stderr = () => {};
+
+const instance: ProgramType.Type = new Program('Core CLI', description, config);
 const actionArgument = (argument: any) => {
 	return argument;
 };
@@ -13,13 +21,9 @@ const actionAll = (argument: any, options: any) => {
 	return { argument, options };
 };
 const customValidator = (value: string) => {
-	if (value && value.startsWith('xxx')) return ['Word not allowed'];
-	return [];
+	if (value && value.startsWith('xxx')) instance.error('Word not allowed');
+	return value;
 };
-const config: any = {};
-if (Deno.args.indexOf('--no-error') !== -1) config.stderr = () => {};
-
-const instance: ProgramType.Type = new Program('Core CLI', description, config);
 
 instance.command('argument:one', description).argument('name', description)
 	.action(actionArgument);

@@ -94,6 +94,7 @@ class Program implements ProgramType.Type {
 				commands: this.#commands,
 			},
 			this,
+			null,
 		);
 		const result = highlight(help.compile());
 		if (stdout) console.log(result);
@@ -124,7 +125,7 @@ class Program implements ProgramType.Type {
 		this.#clearErrors();
 
 		const { argument, options } = this.parse(shell);
-		const shellStr = typeof shell === 'string' ? shell: shell.join(" ");
+		const shellStr = typeof shell === 'string' ? shell : shell.join(' ');
 		const isHelp = () => {
 			if (this.#setup.help) {
 				const { results } = this.#setup.help.getInformation();
@@ -137,49 +138,46 @@ class Program implements ProgramType.Type {
 			console.log(version);
 			return this.#response(version, null);
 		}
+		// help
 		if (!argument.length && isHelp()) {
 			return this.#response(this.showHelp(), null);
 		}
-
-		// find distance
-		const potentialCommand = suggest(
-			argument.join(' '),
-			this.#commands.map((item) => item.getInformation().name),
-		);
-
-		const currentCommand = this.#commands[potentialCommand];
-		const information = {
-			info: currentCommand.getInformation(),
-			arguments: currentCommand.getArgument(),
-			options: currentCommand.getOption(),
-		};
-		const splitName = information.info.name.split(" ");
-		// compare name
-		let count = 0;
-		for(const key of splitName){
-			if (argument.includes(key)) count += 1;
-			else if (count > 0) break;
+		// matching command
+		const result: number[] = [];
+		for (const cmd of this.#commands) {
+			const data = cmd.getInformation();
+			const splits = data.name.split(' ');
+			let counter = 0;
+			for (const index in splits) {
+				if (argument[index] === splits[index]) counter += 1;
+			}
+			result.push(counter);
 		}
-
-		if (count !== splitName.length){
+		const max = Math.max(...result);
+		const index = result.indexOf(max);
+		// command not found
+		if (result.every((value) => value === result[0])) {
 			let text = sprintf(message.error.cmdNotFound, shellStr);
 			if (this.#config.suggestAfterError) {
-				text += ' ' + sprintf(message.error.suggest, information.info.name);
+				const index = suggest(
+					argument.join(' '),
+					this.#commands.map((item) => item.getInformation().name),
+				);
+				if (index !== -1) {
+					text += ' ' + sprintf(message.error.suggest, this.#commands[index].getInformation().name);
+				}
 			}
 			this.error(text);
 			this.#emitError(null);
 			return this.#response(undefined, null);
 		}
-		// show help if command is same and no have options
-		// if (!Object.keys(options).length) {
-		// 	if (isHelp()) {
-		// 		return this.#response(this.showHelp(), null);
-		// 	}
-		// }
-		// console.log(count, splitName, options);
-
-		
-		const newArgument: {[key: string]: string} = {};
+		const currentCommand = this.#commands[index];
+		const information = {
+			info: currentCommand.getInformation(),
+			arguments: currentCommand.getArgument(),
+			options: currentCommand.getOption(),
+		};
+		const newArgument: { [key: string]: string } = {};
 		const splitFromCommand = information.info.name.split(' ');
 		const potentialArg = argument.filter((arg) => !splitFromCommand.find((split) => split === arg));
 
@@ -193,7 +191,6 @@ class Program implements ProgramType.Type {
 			const current = information.arguments[i];
 			const nextCallback = (howMuch: number) => (i += howMuch);
 			const stats = current.doValidation(potentialArg, i, nextCallback);
-
 			this.error(stats.fail);
 			if (stats.data) {
 				const { results } = current.getInformation();
@@ -216,6 +213,9 @@ class Program implements ProgramType.Type {
 			this.error(stats.fail);
 		}
 		// find unknown options
+		const isAllowUnknown = information.info.config.isAllowUnknown;
+		// deno-lint-ignore no-explicit-any
+		const unknownOption: { [key: string]: any } = {};
 		for (const key in options) {
 			let isValid = false;
 			for (const current of information.options) {
@@ -226,6 +226,10 @@ class Program implements ProgramType.Type {
 				}
 			}
 			if (!isValid) {
+				if (isAllowUnknown) {
+					unknownOption[key] = options[key];
+					continue;
+				}
 				let text = sprintf(message.error.optionsUnknown, key);
 				if (this.#config.suggestAfterError) {
 					const indexSuggest = suggest(
@@ -243,6 +247,7 @@ class Program implements ProgramType.Type {
 				this.error(text);
 			}
 		}
+		if (isAllowUnknown) currentCommand.setUnknownOption(unknownOption);
 		// show errors
 		const { errors } = this.#setup;
 		if (errors.length) {
@@ -259,26 +264,33 @@ class Program implements ProgramType.Type {
 		// run postAction hook
 		this.#emitHook('postAction', currentCommand);
 		// if error in progress action
-		if (typeof progress === "object" && progress['isFailed']) {
+		if (typeof progress === 'object' && progress['isFailed']) {
 			return this.#response(undefined, null);
 		} else {
 			return this.#response(progress, null);
 		}
 	}
 
-	makeSectionHelp(position: HelpType.Position, name: string, key: string|null, data: string[][]): ProgramType.Type {
-	    if (!this.#setup.sectionHelp) this.#setup.sectionHelp = {
-	    	afterArgument: []
-	    };
-	    this.#setup.sectionHelp[position]
-	    	.push({
-	    		name,
-	    		key,
-	    		data: data.map((item) => ({
-	    			title: item[0], description: item[1] 
-	    		}))
-	    	})
-	    return this;
+	makeSectionHelp(position: HelpType.Position, name: string, key: string | null, data: string[][]): ProgramType.Type {
+		if (!this.#setup.sectionHelp) {
+			this.#setup.sectionHelp = {
+				afterArgument: [],
+				afterCommand: [],
+				afterOption: [],
+				firstLine: [],
+				lastLine: [],
+			};
+		}
+		this.#setup.sectionHelp[position]
+			.push({
+				name,
+				key,
+				data: data.map((item) => ({
+					title: item[0],
+					description: item[1],
+				})),
+			});
+		return this;
 	}
 	#response(stdout: CommandType.ReturnExecution, stderr: string[] | string | null) {
 		stderr = stderr ? stderr : (this.#setup.errors.length ? this.#setup.errors : null);

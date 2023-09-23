@@ -321,8 +321,7 @@ Deno.test('Core CLI', async (t) => {
 		(response: ProgramType.ReturnExec) => {
 			errorTest.isRequiredArgument(response, 'name');
 		},
-		// deno-lint-ignore no-unused-vars
-		(response: ProgramType.ReturnExec) => {},
+		(_response: ProgramType.ReturnExec) => {},
 		(response: ProgramType.ReturnExec) => {
 			errorTest.isRequiredArgument(response, 'numeric');
 		},

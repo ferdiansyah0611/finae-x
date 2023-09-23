@@ -1,8 +1,8 @@
 {
 	"tasks": {
 		"example": "deno run -A --watch example/main.ts",
-		"test": "deno test -A test/cli/core.test.ts -- --no-error",
-		"test:watch": "deno test -A --watch test/cli/core.test.ts -- --no-error"
+		"test": "deno test test/core",
+		"test:watch": "deno test test/core --watch"
 	},
 	"imports": {
 		"@/": "./",

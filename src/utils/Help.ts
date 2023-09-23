@@ -8,6 +8,10 @@ type SectionCallbackReturn = { title: string; description: string };
 
 export default class Help implements HelpType.Type {
 	#program: ProgramType.Type;
+	/**
+	 * current command
+	 */
+	#command: CommandType.Type | null;
 	#info: {
 		name: string;
 		description: string;
@@ -21,20 +25,38 @@ export default class Help implements HelpType.Type {
 		version: string,
 		collection: HelpType.Collection,
 		program: ProgramType.Type,
+		command: CommandType.Type | null,
 		isCommand: boolean = false,
 	) {
 		this.#program = program;
+		this.#command = command;
 		this.#info = { name, description, version, collection, isCommand };
 	}
 	compile(): string {
 		const setup = this.#program.getSetup();
 		const { collection } = this.#info;
-
+		const allowToMakeSection = (section: HelpType.ItemSection): boolean => {
+			if (section.key === null) return true;
+			if (section.key && section.key.length && this.#command) {
+				const splitKey = section.key.split(' ');
+				const splitName = this.#command.getInformation().name.split(' ');
+				let count = 0;
+				for (const item in splitKey) {
+					if (splitKey[item] === splitName[item]) count += 1;
+					if (count > 0) break;
+				}
+				if (count !== 0) return true;
+				return false;
+			}
+			return false;
+		};
 		let usagePattern = /('command\.js)/;
+		let nested: number[] = [];
+		// custom usage
 		if (setup.usage.name) {
 			usagePattern = new RegExp('(\'' + setup.usage.name + ')');
 		}
-
+		// set [] for empty options
 		collection.options = collection.options || [];
 		if (setup.help) {
 			collection.options.push(setup.help);
@@ -59,7 +81,13 @@ export default class Help implements HelpType.Type {
 			arguments: [],
 			commands: [],
 			options: [],
+			afterArgument: [],
+			afterCommand: [],
+			afterOption: [],
+			firstLine: [],
+			lastLine: [],
 		};
+
 		if (collection.options?.length) {
 			text = text.replace(usagePattern, '$1 [options]');
 			len.options = collection.options.map((v) => v.getInformation().synopsis.length);
@@ -76,57 +104,121 @@ export default class Help implements HelpType.Type {
 			text = text.replace(usagePattern, '$1 ' + this.#info.name);
 		}
 
-		let nested: number[] = [];
-		const columns = this.getColumns();
+		if (setup.sectionHelp) {
+			for (const key in setup.sectionHelp) {
+				if (!setup.sectionHelp[key] || !setup.sectionHelp[key].length) continue;
+				for (const section of setup.sectionHelp[key]) {
+					if (allowToMakeSection(section)) {
+						len[key] = len[key].concat(section.data.map((v) => v.title.length));
+					}
+				}
+			}
+		}
 
-		const allLength = [...len.arguments, ...len.commands, ...len.options];
-		const max = Math.max(...allLength);
+		const maxAll = [
+			...len.arguments,
+			...len.commands,
+			...len.options,
+			...len.afterArgument,
+			...len.afterCommand,
+			...len.afterOption,
+			...len.firstLine,
+			...len.lastLine,
+		];
+		const max = Math.max(...maxAll);
+		const columns = this.getColumns();
+		/**
+		 * create empty text for one columns
+		 */
+		const oneColumnEmpty = () => '\n' + ' '.repeat(max + 2) + '\t';
+		/**
+		 * create text on column two
+		 */
+		const twoColumn = (oneColVal: string, curentValue: string): string => {
+			let value = '';
+			for (let i = 0; i < curentValue.length; i++) {
+				value += curentValue[i];
+				if (Number.isInteger(i / (columns - oneColVal.length)) && i !== 0) {
+					value += oneColumnEmpty();
+				}
+			}
+			return value;
+		};
+		/**
+		 * generate section custom to stdout
+		 */
+		const makeSectionCustom = (position: HelpType.Position, isOutput?: boolean): string | void => {
+			if (!setup.sectionHelp) return '';
+			if (setup.sectionHelp[position]) {
+				let output = '';
+				for (const section of setup.sectionHelp[position]) {
+					if (allowToMakeSection(section)) {
+						const results: string = section.data.map(
+							(item: { title: string; description: string }, index: number) => {
+								const remain = max - len[position][index];
+								const title = cyan(item.title) + ' '.repeat(remain) + '\t';
+								const group = title + item.description;
+								const value = twoColumn(title, group);
+								return sprintf('  %s%s', value, group.length > columns ? '\n' : '');
+							},
+						).join('\n');
+						const outputs = '\n' + section.name + '\n\n' + results + '\n';
+						if (results.length && !isOutput) {
+							appendText += outputs;
+						} else {
+							output += outputs;
+						}
+					}
+				}
+				if (isOutput) return output;
+			}
+		};
+		/**
+		 * generate section to stdout
+		 */
 		const makeSection = (
 			key: string,
 			selectorCallback: (
 				item: ItemType,
 			) => SectionCallbackReturn,
 		) => {
-			const isCore = ["arguments", "commands", "options"].includes(key);
-			let result: string[]|string = collection[key]
+			const isCore = this.#isCore(key);
+			let result: string[] | string = collection[key]
 				.map((item: ItemType, index: number) => {
 					const selector = selectorCallback(item);
-					if (key === "commands" && this.#info.isCommand) {
-						selector.title = selector.title.replace(this.#info.name, '') + " ".repeat(this.#info.name.length);
+					if (key === 'commands' && this.#info.isCommand) {
+						selector.title = selector.title.replace(this.#info.name, '') +
+							' '.repeat(this.#info.name.length);
 					}
 
 					const remain = max - len[key][index];
 					const title = cyan(selector.title) + ' '.repeat(remain) + '\t';
 					// wrapping text
-					const groupText = title + selector.description;
-					const oneColumn = () => '\n' + ' '.repeat(max + 2) + '\t';
-					const twoColumn = (curentValue: string): string => {
-						let value = '';
-						for (let i = 0; i < curentValue.length; i++) {
-							value += curentValue[i];
-							if (Number.isInteger(i / (columns - title.length)) && i !== 0) {
-								value += oneColumn();
-							}
-						}
-						return value;
-					}
-					let newText = twoColumn(groupText);
+					const group = title + selector.description;
+					let newText = twoColumn(title, group);
+
 					if (isCore) {
 						const config = item.getInformation().config;
 						if (config.default) {
-							newText += oneColumn();
-							newText += twoColumn(sprintf('%s %s', blue("default  :"), config.default))
+							newText += oneColumnEmpty();
+							newText += twoColumn(title, sprintf('%s %s', blue('default  :'), config.default));
 						}
 						if (config.include && config.include.length) {
-							newText += oneColumn();
-							newText += twoColumn(sprintf('%s [%s]', blue("includes :"), config.include.join(", ")))
+							newText += oneColumnEmpty();
+							newText += twoColumn(
+								title,
+								sprintf('%s [%s]', blue('includes :'), config.include.join(', ')),
+							);
 						}
 						if (config.exclude && config.exclude.length) {
-							newText += oneColumn();
-							newText += twoColumn(sprintf('%s [%s]', blue("excludes :"), config.exclude.join(", ")))
+							newText += oneColumnEmpty();
+							newText += twoColumn(
+								title,
+								sprintf('%s [%s]', blue('excludes :'), config.exclude.join(', ')),
+							);
 						}
 					}
-					return sprintf('  %s%s', newText, groupText.length > columns ? "\n": "");
+					return sprintf('  %s%s', newText, group.length > columns ? '\n' : '');
 				});
 			if (Array.isArray(result)) {
 				if (key === 'commands') {
@@ -147,6 +239,8 @@ export default class Help implements HelpType.Type {
 				return { title: synopsis, description };
 			});
 		}
+		makeSectionCustom('afterArgument');
+
 		if (collection.commands) {
 			makeSection('commands', (item: CommandType.Type) => {
 				const currNested = item.getNestedKey();
@@ -157,75 +251,23 @@ export default class Help implements HelpType.Type {
 				return { title: name, description };
 			});
 		}
+		makeSectionCustom('afterCommand');
+
 		if (collection.options) {
 			makeSection('options', (item: OptionType.Type) => {
 				const { synopsis, description } = item.getInformation();
 				return { title: synopsis, description };
 			});
 		}
-
+		makeSectionCustom('afterOption');
+		text = makeSectionCustom('firstLine', true) + text;
 		text += appendText;
+		text += makeSectionCustom('lastLine', true);
 		return text;
 	}
 
-	// makeSection(key: string, selectorCallback: (item: ItemType) => SectionCallbackReturn): HelpType.Type {
-	// 	const isCore = this.#isCore(key);
-	// 	const columns = this.getColumns();
-	// 	const oneColumn = () => '\n' + ' '.repeat(max + 2) + '\t';
-	// 	const twoColumn = (oneColValue: string, curentValue: string): string => {
-	// 		let value = '';
-	// 		for (let i = 0; i < curentValue.length; i++) {
-	// 			value += curentValue[i];
-	// 			if (Number.isInteger(i / (columns - oneColValue.length)) && i !== 0) {
-	// 				value += oneColumn();
-	// 			}
-	// 		}
-	// 		return value;
-	// 	}
-	// 	let result: string[]|string = collection[key]
-	// 		.map((item: ItemType, index: number) => {
-	// 			const selector = selectorCallback(item);
-	// 			if (key === "commands" && this.#info.isCommand) {
-	// 				selector.title = selector.title.replace(this.#info.name, '') + " ".repeat(this.#info.name.length);
-	// 			}
-	// 			const remain = max - len[key][index];
-	// 			const title = cyan(selector.title) + ' '.repeat(remain) + '\t';
-	// 			// wrapping text
-	// 			const groupText = title + selector.description;
-	// 			let newText = twoColumn(title, groupText);
-	// 			if (isCore) {
-	// 				const config = item.getInformation().config;
-	// 				if (config.default) {
-	// 					newText += oneColumn();
-	// 					newText += twoColumn(title, sprintf('%s %s', blue("default  :"), config.default))
-	// 				}
-	// 				if (config.include && config.include.length) {
-	// 					newText += oneColumn();
-	// 					newText += twoColumn(title, sprintf('%s [%s]', blue("includes :"), config.include.join(", ")))
-	// 				}
-	// 				if (config.exclude && config.exclude.length) {
-	// 					newText += oneColumn();
-	// 					newText += twoColumn(title, sprintf('%s [%s]', blue("excludes :"), config.exclude.join(", ")))
-	// 				}
-	// 			}
-	// 			return sprintf('  %s%s', newText, groupText.length > columns ? "\n": "");
-	// 		});
-	// 	if (Array.isArray(result)) {
-	// 		if (key === 'commands') {
-	// 			result = result.filter((_, index: number) => !nested.includes(index));
-	// 		}
-	// 		result = result.join('\n');
-	// 	}
-	// 	if (result.length) {
-	// 		appendText += '\n' + (key[0].toUpperCase() + key.slice(1)) +
-	// 			':\n\n' +
-	// 			result + '\n';
-	// 	}
-	// 	return this;
-	// }
-
 	getColumns(): number {
-		let columns = 100;
+		let columns;
 		try {
 			columns = Deno.consoleSize().columns;
 		} catch (_e) {
@@ -234,6 +276,6 @@ export default class Help implements HelpType.Type {
 		return columns;
 	}
 	#isCore(key: string): boolean {
-		return ["arguments", "commands", "options"].includes(key);
+		return ['arguments', 'commands', 'options'].includes(key);
 	}
 }

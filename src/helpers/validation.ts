@@ -95,7 +95,7 @@ const validation: ValidationType.Type = {
 	): boolean {
 		if (!config.include) return false;
 		const result = config.include.indexOf(value);
-		if (result !== -1) return true;
+		if (result !== -1) return false;
 		stats.fail.push(
 			sprintf(
 				message.error.isNotIn,
@@ -115,7 +115,7 @@ const validation: ValidationType.Type = {
 	): boolean {
 		if (!config.exclude) return false;
 		const result = config.exclude.indexOf(value);
-		if (result !== -1) return true;
+		if (result === -1) return false;
 		stats.fail.push(
 			sprintf(
 				message.error.isExlude,
@@ -140,12 +140,11 @@ const validation: ValidationType.Type = {
 		} else if (config.type === 'Float') {
 			value = this.validateFloat(instance, key, value, stats);
 		}
-
 		// include/exclude
 		if (config.include) {
 			this.validateInclude(instance, key, value, stats, config);
 		}
-		if (config.include) {
+		if (config.exclude) {
 			this.validateExclude(instance, key, value, stats, config);
 		}
 		return value;

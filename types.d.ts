@@ -64,10 +64,18 @@ export namespace ProgramType {
 		 * customize your usage description
 		 */
 		usage(name: string): Type;
-
-		makeSectionHelp(position: HelpType.Position, name: string, key: string|null, data: string[][]): Type;
+		/**
+		 * create custom sections help
+		 * @param position - choice position text
+		 * @param name - title of section
+		 * @param key - set command name to `key` to run specified command
+		 * @param data - text of section `[["row 1", "description"]]`
+		 */
+		makeSectionHelp(position: HelpType.Position, name: string, key: string | null, data: string[][]): Type;
 	}
-
+	/**
+	 * Represents return parse
+	 */
 	type ParseResult = {
 		argument: string[];
 		options: {
@@ -118,8 +126,13 @@ export namespace ProgramType {
 			[key: string]: HelpType.ItemSection[];
 		};
 	};
-
+	/**
+	 * Represents the type hook event
+	 */
 	type HookType = 'preAction' | 'postAction' | 'preError' | 'postError';
+	/**
+	 * Represents the callback hook event
+	 */
 	type HookCallback = (command: CommandType.Type | null) => void;
 }
 
@@ -143,7 +156,11 @@ export namespace CommandType {
 		 * @param callback - Optional callback function for additional argument configuration.
 		 * @returns The updated command.
 		 */
-		argument(name: string, description: string, callback?: (cls: ArgumentType.Type) => ArgumentType.Type): CommandType.Type;
+		argument(
+			name: string,
+			description: string,
+			callback?: (cls: ArgumentType.Type) => ArgumentType.Type,
+		): CommandType.Type;
 		/**
 		 * Adds an option to the command.
 		 * @param synopsis - The synopsis of the option.
@@ -151,7 +168,11 @@ export namespace CommandType {
 		 * @param callback - Optional callback function for additional option configuration.
 		 * @returns The updated command.
 		 */
-		option(synopsis: string, description: string, callback?: (cls: OptionType.Type) => OptionType.Type): CommandType.Type;
+		option(
+			synopsis: string,
+			description: string,
+			callback?: (cls: OptionType.Type) => OptionType.Type,
+		): CommandType.Type;
 		/**
 		 * Sets the action to be executed when the command is invoked.
 		 * @param callback - The callback function to be executed.
@@ -195,6 +216,18 @@ export namespace CommandType {
 		 * @returns The generated help message.
 		 */
 		showHelp(stdout?: boolean): string;
+		/**
+		 * Allow unknown options on the current command instance.
+		 */
+		allowUnknownOption(isActive?: boolean): Type;
+		/**
+		 * Set unknown options to the current command instance
+		 */
+		setUnknownOption(data: any): Type;
+		/**
+		 * Get unknown options on the current command instance
+		 */
+		getUnknownOption(): any;
 	}
 	/**
 	 * Represents information about a command.
@@ -210,13 +243,16 @@ export namespace CommandType {
 	 */
 	type Config = {
 		help?: string;
+		isAllowUnknown?: boolean;
 	};
 	/**
 	 * Represents a callback function for command execution.
 	 */
-	type ActionCallback = (argument?: any, options?: any) => any;
-
-	type ReturnExecution = { [key: string]: string|boolean } | string | undefined;
+	type ActionCallback = (argument?: any, options?: any, cmd?: Type) => any;
+	/**
+	 * Return type for execution command
+	 */
+	type ReturnExecution = { [key: string]: string | boolean } | string | undefined;
 }
 
 export namespace ArgumentType {
@@ -248,7 +284,11 @@ export namespace ArgumentType {
 		 * @param nextCallback - The callback function to continue the validation process.
 		 * @returns Validation statistics.
 		 */
-		doValidation(argument: string[], index: number, nextCallback: (howMuch: number) => any): ValidationType.Stats;
+		doValidation(
+			argument: string[] | number[],
+			index: number,
+			nextCallback: (howMuch: number) => any,
+		): ValidationType.Stats;
 		/**
 		 * Sets the argument type as string.
 		 * @param defaults - Optional default value for the argument.
@@ -433,7 +473,7 @@ export namespace OptionType {
 }
 
 export namespace HelpType {
-	type Position = "afterArgument" | "afterCommand" | "afterOption";
+	type Position = 'afterArgument' | 'afterCommand' | 'afterOption' | 'firstLine' | 'lastLine';
 	/**
 	 * Represents a type of help.
 	 */
@@ -448,10 +488,14 @@ export namespace HelpType {
 		commands?: CommandType.Type[];
 		options?: OptionType.Type[];
 		arguments?: ArgumentType.Type[];
-		afterArgument?: { title: string; description: string; }[];
+		afterArgument?: ItemSectionData[];
+		afterCommand?: ItemSectionData[];
+		afterOption?: ItemSectionData[];
+		firstLine?: ItemSectionData[];
+		lastLine?: ItemSectionData[];
 	};
 	/**
-	 * List of synopsis/name length 
+	 * List of synopsis/name length
 	 */
 	type CountCollection = {
 		[key: string]: number[];
@@ -459,13 +503,23 @@ export namespace HelpType {
 		commands: number[];
 		options: number[];
 		afterArgument: number[];
+		afterCommand: number[];
+		afterOption: number[];
+		firstLine: number[];
+		lastLine: number[];
 	};
-
+	/**
+	 * Represents a custom section help.
+	 */
 	type ItemSection = {
 		name: string;
 		key: string | null;
-		data: { title: string; description: string; }[];
-	}
+		data: ItemSectionData[];
+	};
+	/**
+	 * Represents a item for custom section help.
+	 */
+	type ItemSectionData = { title: string; description: string };
 }
 
 export namespace ValidationType {
@@ -592,5 +646,5 @@ export namespace ValidationType {
 	/**
 	 * Represents a callback validator.
 	 */
-	type CallbackValidator = (value: string) => any;
+	type CallbackValidator = (value: string | number) => any;
 }
