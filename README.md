@@ -164,7 +164,7 @@ const root = program
 	.command('root', 'description')
 	.action(() => console.log('root'));
 
-root.execute({
+await root.execute({
 	argument: [],
 	options: {}
 });
@@ -172,45 +172,221 @@ root.execute({
 
 ### Argument
 
+Explain the use of argument:
+
 #### Default Value
-#### String
-#### Number
-#### Float
+
+Can provide their default values.
+
+```ts
+program
+	.command('main', 'description')
+	.argument('name', 'description', (cls) => cls.default('ferdiansyah'))
+	.action(() => console.log('main'));
+```
+
+#### Type
+
+There are several data types such as string, float, and number. String as default type.
+
+```ts
+program
+	.command('main', 'description')
+	.argument('str', 'description', (cls) => cls.string('default'))
+	.argument('number', 'description', (cls) => cls.number(100))
+	.argument('float', 'description', (cls) => cls.float(10.10))
+```
+
 #### Include
+
+Supports selection based on parameter data.
+
+```ts
+program
+	.command('main', 'description')
+	.argument('style', 'description', (cls) => cls.include(['css', 'less', 'sass', 'scss']))
+```
+
 #### Exclude
+
+Supports exceptions based on parameter data.
+
+```ts
+program
+	.command('main', 'description')
+	.argument('format', 'description', (cls) => cls.exclude(['mp3', 'mp4']))
+```
+
 #### Variadic
+
+Supports unlimited values, making it an array.
+
+```ts
+program
+	.command('main', 'description')
+	.argument('name', 'description', (cls) => cls.variadic())
+	.argument('number', 'description', (cls) => cls.number().variadic())
+```
+
 #### Custom Validator
+
+Supports custom validation, must return a value.
+
+```ts
+program
+	.command('main', 'description')
+	.argument('name', 'description', (cls) => cls.validator((value) => {
+		if (typeof value === 'string' && value.includes('xxx')) return value.replaceAll('xxx', '[removed]');
+		return value;
+	}))
+```
 
 ### Option
 
+Explain the use of options:
+
 #### Default Value
-#### String
-#### Number
-#### Float
+
+Can provide their default values.
+
+```ts
+program
+	.command('main', 'description')
+	.option('name', 'description', (cls) => cls.default('ferdiansyah'))
+	.action(() => console.log('main'));
+```
+
+#### Type
+
+There are several data types such as string, float, and number. String as default type.
+
+```ts
+program
+	.command('main', 'description')
+	.option('str', 'description', (cls) => cls.string('default'))
+	.option('number', 'description', (cls) => cls.number(100))
+	.option('float', 'description', (cls) => cls.float(10.10))
+```
+
 #### Include
+
+Supports selection based on parameter data.
+
+```ts
+program
+	.command('main', 'description')
+	.option('style', 'description', (cls) => cls.include(['css', 'less', 'sass', 'scss']))
+```
+
 #### Exclude
+
+Supports exceptions based on parameter data.
+
+```ts
+program
+	.command('main', 'description')
+	.option('format', 'description', (cls) => cls.exclude(['mp3', 'mp4']))
+```
+
 #### Variadic
+
+Supports unlimited values, making it an array.
+
+```ts
+program
+	.command('main', 'description')
+	.option('name', 'description', (cls) => cls.variadic())
+	.option('number', 'description', (cls) => cls.number().variadic())
+```
+
 #### Custom Validator
+
+Supports custom validation, must return a value.
+
+```ts
+program
+	.command('main', 'description')
+	.option('name', 'description', (cls) => cls.validator((value) => {
+		if (typeof value === 'string' && value.includes('xxx')) return value.replaceAll('xxx', '[removed]');
+		return value;
+	}))
+```
+
 #### Conflicts
+
+Commands will give an error if these options run simultaneously.
+
+```ts
+program
+	.command('main', 'description')
+	.option('port', 'description', (cls) => cls.conflicts(['default-port']))
+	.option('default-port', 'description')
+```
+
 #### Implies
+
+Options will provide a default value to the specified options if the options do not have a value during execution.
+
+```ts
+program
+	.command('main', 'description')
+	.option('port', 'description', (cls) => cls.conflicts(['default-port']))
+	.option('default-port', 'description')
+```
+
 #### Required
+
+Commands will give an error if the options do not have a value.
+
+```ts
+program
+	.command('main', 'description')
+	.option('port', 'description', (cls) => cls.required())
+```
+
 #### Hidden from Help
+
+Hides options from help output.
+
+```ts
+program
+	.command('main', 'description')
+	.option('name', 'description', (cls) => cls.hideHelp())
+```
 
 ### Help
 
+Explain the use of help:
+
 #### Custom Help
-#### Custom Section
-#### Manual Show Help
 
-## Test
+Customize synopsis and description for help.
 
-```bash
-deno task test
-deno task test:watch # watch mode
+```ts
+program.helpOption('-h, --helper', "show help command");
 ```
 
-## Contributing
+#### Custom Section
 
-## License
+You can add section output help with specified position `'afterArgument' | 'afterCommand' | 'afterOption' | 'firstLine' | 'lastLine'`.
 
-MIT LICENSE
+```ts
+const data = [
+	['title', 'a'.repeat(50)]
+];
+program.makeSectionHelp('afterArgument', 'afterArgument:', null, data);
+program.makeSectionHelp('afterCommand', 'afterCommand:', null, data);
+program.makeSectionHelp('afterOption', 'afterOption:', null, data);
+program.makeSectionHelp('firstLine', 'firstLine:', null, data);
+program.makeSectionHelp('lastLine', 'lastLine:', null, data);
+```
+
+#### Manual Show Help
+
+Support manual to show help, pass `false` to argument to get output.
+
+```ts
+program.showHelp();
+const output = program.showHelp(false);
+console.log(output);
+```

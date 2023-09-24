@@ -9,7 +9,7 @@ const message = {
 		actionNotFound: 'Action not defined for command \'%s\'',
 		mustHaveOneLength: '%s \'%s\' must be have minimum 1 length',
 		isConflictsOption: 'Option \'%s\' cannot be used with option \'%s\'',
-		suggest: 'Did you mean? \'%s\'',
+		suggest: 'Did you mean \'%s\' ?',
 	},
 };
 
