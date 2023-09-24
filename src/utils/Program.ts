@@ -156,7 +156,7 @@ class Program implements ProgramType.Type {
 		const max = Math.max(...result);
 		const index = result.indexOf(max);
 		// command not found
-		if (result.every((value) => value === result[0])) {
+		if (result.every((value) => value === result[0]) && result.length > 1) {
 			let text = sprintf(message.error.cmdNotFound, shellStr);
 			if (this.#config.suggestAfterError) {
 				const index = suggest(
@@ -185,7 +185,7 @@ class Program implements ProgramType.Type {
 		if (isHelp()) {
 			return this.#response(currentCommand.showHelp(), null);
 		}
-
+		console.log(isHelp())
 		// check argument
 		for (let i = 0; i < information.arguments.length; i++) {
 			const current = information.arguments[i];
@@ -281,15 +281,14 @@ class Program implements ProgramType.Type {
 				lastLine: [],
 			};
 		}
-		this.#setup.sectionHelp[position]
-			.push({
-				name,
-				key,
-				data: data.map((item) => ({
-					title: item[0],
-					description: item[1],
-				})),
-			});
+		this.#setup.sectionHelp[position].push({
+			name,
+			key,
+			data: data.map((item) => ({
+				title: item[0],
+				description: item[1],
+			})),
+		});
 		return this;
 	}
 	#response(stdout: CommandType.ReturnExecution, stderr: string[] | string | null) {

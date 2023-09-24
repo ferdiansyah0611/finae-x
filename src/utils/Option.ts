@@ -1,4 +1,4 @@
-import { ArgumentType, CommandType, OptionType, ValidationType } from '@/types.d.ts';
+import { CommandType, OptionType, ValidationType } from '@/types.d.ts';
 import { sprintf } from 'printf';
 import validation from '@/src/helpers/validation.ts';
 import message from '@/src/helpers/message.ts';
@@ -14,7 +14,6 @@ export default class Option implements OptionType.Type {
 		isVariadic: false,
 		default: null,
 		type: 'String',
-		env: null
 	};
 	#results: OptionType.Result = {
 		char: '',

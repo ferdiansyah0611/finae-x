@@ -414,7 +414,11 @@ export namespace OptionType {
 		 * @returns The option instances.
 		 */
 		float(defaults?: number): Type;
-
+		/**
+		 * Sets the option type as boolean.
+		 * @param defaults - Optional default value for the option.
+		 * @returns The option instances.
+		 */
 		boolean(defaults?: boolean): Type;
 		/**
 		 * Specifies that the option should include values from a collection.
@@ -456,7 +460,7 @@ export namespace OptionType {
 		isVariadic: boolean;
 		default: any;
 		type: any;
-		env: string|null;
+		env?: string;
 		validator?: ValidationType.CallbackValidator;
 		include?: any[];
 		exclude?: any[];
@@ -669,4 +673,20 @@ export namespace ValidationType {
 	 * Represents a callback validator.
 	 */
 	type CallbackValidator = (value: string | number) => any;
+}
+
+export namespace MessageType {
+	type Error = {
+		[key: string]: string;
+		isRequired: string;
+		isNotType: string;
+		isNotIn: string;
+		isExlude: string;
+		cmdNotFound: string;
+		optionsUnknown: string;
+		actionNotFound: string;
+		mustHaveOneLength: string;
+		isConflictsOption: string;
+		suggest: string;
+	}
 }

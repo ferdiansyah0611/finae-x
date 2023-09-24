@@ -1,3 +1,5 @@
+import { MessageType } from '@/types.d.ts';
+
 const message = {
 	error: {
 		isRequired: '%s \'%s\' is required',
@@ -11,6 +13,9 @@ const message = {
 		isConflictsOption: 'Option \'%s\' cannot be used with option \'%s\'',
 		suggest: 'Did you mean \'%s\' ?',
 	},
+	update(error: MessageType.Error) {
+		Object.assign(this.error, error);
+	}
 };
 
 export default message;

@@ -18,16 +18,24 @@ program
 program
 	.command('side', 'description')
 	.argument('name', 'description')
-	.action((argument) => console.log(argument.name));
+	.action((argument, cmd) => console.log(argument.name));
 program
 	.command('section', 'description')
 	.option('name', 'description')
-	.action((option) => console.log(option.name));
+	.action((option, cmd) => console.log(option.name));
 program
 	.command('bar', 'description')
 	.argument('name', 'description')
 	.option('name', 'description')
 	.action((argument, option) => console.log(argument.name, option.name));
+program
+	.command('satset', 'description')
+	.argument('name', 'description')
+	.option('name', 'description')
+	.action(function() {
+		console.log(this.arg)
+		console.log(this.opt)
+	});
 
 await program.exec('main');
 await program.exec('side ferdy');
@@ -333,7 +341,7 @@ Options will provide a default value to the specified options if the options do 
 ```ts
 program
 	.command('main', 'description')
-	.option('port', 'description', (cls) => cls.implies(['default-port']))
+	.option('port', 'description', (cls) => cls.implies({'default-port': 3721}))
 	.option('default-port', 'description');
 ```
 
@@ -381,7 +389,7 @@ program.helpOption('-h, --helper', 'show help command');
 
 #### Custom Section
 
-You can add section output help with specified position `'afterArgument' | 'afterCommand' | 'afterOption' | 'firstLine' | 'lastLine'`.
+You can add section output help with specified position: `'afterArgument' | 'afterCommand' | 'afterOption' | 'firstLine' | 'lastLine'`.
 
 ```ts
 const data = [
@@ -403,4 +411,51 @@ program.showHelp();
 
 const output = program.showHelp(false);
 console.log(output);
+```
+
+## More Feature
+
+Explains other features:
+
+### Suggest After Error
+
+Activate this feature if you want to add an error message to a suggestion.
+
+```ts
+const program = new Program('MY CLI', 'description', {
+	version: '1.0.0',
+	suggestAfterError: true
+});
+```
+
+### Custom Error Message
+
+You can change the error message with the specified key.
+
+```ts
+import message from '@/src/helpers/message.ts';
+import stderr from '@/src/helpers/stderr.ts';
+
+message.update({
+	isRequired: '%s \'%s\' harus di isi',
+	isNotType: '%s \'%s\' bukan sebuah type %s',
+	isNotIn: '%s \'%s\' tidak termasuk dalam: %s',
+	isExlude: '%s \'%s\' termasuk dalam pengecualian: %s',
+	cmdNotFound: 'Command \'%s\' tidak ditemukan.',
+	optionsUnknown: 'Pilihan tidak teridentifikasi \'%s\'',
+	actionNotFound: 'Aksi tidak didefinisikan untuk command \'%s\'',
+	mustHaveOneLength: '%s \'%s\' harus memiliki minimal punya 1 data',
+	isConflictsOption: 'Pilihan \'%s\' tidak bisa digunakan dengan pilihan \'%s\'',
+	suggest: 'Apakah maksud kamu \'%s\' ?',
+});
+
+const program = new Program('MY CLI', 'description', {
+	version: '1.0.0',
+	stderr(error) {
+		if (Array.isArray(error)) {
+			error = error.map(value => value.replace('Arguments', 'Argumen').replace('Options', 'Pilihan'))
+		}
+	    stderr(error)
+	},
+});
 ```
