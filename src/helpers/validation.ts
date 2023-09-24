@@ -19,6 +19,10 @@ const validation: ValidationType.Type = {
 		const pattern = /^[a-zA-Z0-9]+/i;
 		return { value, is: pattern.test(value) };
 	},
+	Boolean(value: any): ValidationType.ReturnDataType {
+		value = Boolean(value);
+		return { value, is: value };
+	},
 	handler(
 		choice: ValidationType.choice,
 		type: 'Number' | 'Float' | 'String',
@@ -53,6 +57,15 @@ const validation: ValidationType.Type = {
 		stats: ValidationType.Stats,
 	): number | string {
 		const results = this.handler(choice, 'Float', fullName, value, stats);
+		return results.value;
+	},
+	validateBoolean(
+		choice: ValidationType.choice,
+		fullName: string,
+		value: any,
+		stats: ValidationType.Stats,
+	): number | string {
+		const results = this.handler(choice, 'Boolean', fullName, value, stats);
 		return results.value;
 	},
 	validateString(
@@ -139,6 +152,8 @@ const validation: ValidationType.Type = {
 			value = this.validateNumber(instance, key, value, stats);
 		} else if (config.type === 'Float') {
 			value = this.validateFloat(instance, key, value, stats);
+		} else if (config.type === 'Boolean') {
+			value = this.validateBoolean(instance, key, value, stats);
 		}
 		// include/exclude
 		if (config.include) {

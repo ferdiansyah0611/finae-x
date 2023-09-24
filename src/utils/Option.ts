@@ -1,7 +1,8 @@
-import { CommandType, OptionType, ValidationType } from '@/types.d.ts';
+import { ArgumentType, CommandType, OptionType, ValidationType } from '@/types.d.ts';
 import { sprintf } from 'printf';
 import validation from '@/src/helpers/validation.ts';
 import message from '@/src/helpers/message.ts';
+import env from '@/src/helpers/env.ts';
 
 export default class Option implements OptionType.Type {
 	#synopsis: string;
@@ -13,6 +14,7 @@ export default class Option implements OptionType.Type {
 		isVariadic: false,
 		default: null,
 		type: 'String',
+		env: null
 	};
 	#results: OptionType.Result = {
 		char: '',
@@ -46,6 +48,10 @@ export default class Option implements OptionType.Type {
 		const { config, results } = this.getInformation();
 		const choice = options[results.fullName] ? results.fullName : results.char || results.fullName;
 		const name = results.fullName || results.char;
+		// set value from env
+		if (config.env) {
+			options[choice] = env[config.env];
+		}
 		// check default value
 		if (!options[choice]) {
 			if (config.default) options[choice] = config.default;
@@ -198,6 +204,11 @@ export default class Option implements OptionType.Type {
 		this.default(defaults);
 		return this;
 	}
+	boolean(defaults?: boolean|undefined): OptionType.Type {
+	    this.#config.type = 'Boolean';
+		this.default(defaults);
+		return this;
+	}
 	// deno-lint-ignore no-explicit-any
 	include(collection: any[]): OptionType.Type {
 		const { results } = this.getInformation();
@@ -229,5 +240,10 @@ export default class Option implements OptionType.Type {
 		}
 		this.#config.exclude = collection;
 		return this;
+	}
+	env(name: string): OptionType.Type {
+		if (!env[name]) throw Error(sprintf("environment '%s' is not set", name));
+	    this.#config.env = name;
+	    return this;
 	}
 }

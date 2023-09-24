@@ -10,9 +10,9 @@ class FactoryMessage implements TestType.ErrorMessage {
 	constructor(instance: TestType.Instance) {
 		this.instance = instance;
 	}
-	isRequired(response: ProgramType.ReturnExec, name: string[]|string): TestType.ErrorMessage {
+	isRequired(response: ProgramType.ReturnExec, name: string[] | string): TestType.ErrorMessage {
 		if (Array.isArray(name)) {
-			for(const value of name) {
+			for (const value of name) {
 				this.isRequired(response, value);
 			}
 		} else {

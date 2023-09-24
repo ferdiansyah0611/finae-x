@@ -383,13 +383,13 @@ export namespace OptionType {
 		 * @param callback - The validator callback function.
 		 * @returns The option instances.
 		 */
-		validator(callback: ValidationType.CallbackValidator): OptionType.Type;
+		validator(callback: ValidationType.CallbackValidator): Type;
 		/**
 		 * Sets a default value for the option.
 		 * @param value - The default value.
 		 * @returns The option instances.
 		 */
-		default(value?: any): OptionType.Type;
+		default(value?: any): Type;
 		/**
 		 * Performs validation on the option.
 		 * @param options - The options object.
@@ -401,43 +401,51 @@ export namespace OptionType {
 		 * @param defaults - Optional default value for the option.
 		 * @returns The option instances.
 		 */
-		string(defaults?: string): OptionType.Type;
+		string(defaults?: string): Type;
 		/**
 		 * Sets the option type as number.
 		 * @param defaults - Optional default value for the option.
 		 * @returns The option instances.
 		 */
-		number(defaults?: number): OptionType.Type;
+		number(defaults?: number): Type;
 		/**
 		 * Sets the option type as float.
 		 * @param defaults - Optional default value for the option.
 		 * @returns The option instances.
 		 */
-		float(defaults?: number): OptionType.Type;
+		float(defaults?: number): Type;
+
+		boolean(defaults?: boolean): Type;
 		/**
 		 * Specifies that the option should include values from a collection.
 		 * @param collection - The collection of values to include.
 		 * @returns The option instances.
 		 */
-		include(collection: any[]): OptionType.Type;
+		include(collection: any[]): Type;
 		/**
 		 * Specifies that the option should exclude values from a collection.
 		 * @param collection - The collection of values to exclude.
 		 * @returns The option instances.
 		 */
-		exclude(collection: any[]): OptionType.Type;
+		exclude(collection: any[]): Type;
 		/**
 		 * Specifies that the option conflicts with another option.
 		 * @param name - The name of the conflicting option.
 		 * @returns The option instances.
 		 */
-		conflicts(...name: string[]): OptionType.Type;
+		conflicts(...name: string[]): Type;
 		/**
 		 * Specifies the implied option value when this option is set and the implied option has no value.
 		 * @param data - The data of the implies option.
 		 * @returns The option instances.
 		 */
-		implies(data: any): OptionType.Type;
+		implies(data: any): Type;
+		/**
+		 * Sets a default value from environment.
+		 * @param name - The name environment.
+		 * @returns The option instances.
+		 */
+		env(name: string): Type;
 	}
 	/**
 	 * Represents the configuration of an option, including properties like isHidden, isRequired, isVariadic, default, type, and validator
@@ -448,6 +456,7 @@ export namespace OptionType {
 		isVariadic: boolean;
 		default: any;
 		type: any;
+		env: string|null;
 		validator?: ValidationType.CallbackValidator;
 		include?: any[];
 		exclude?: any[];
@@ -530,59 +539,72 @@ export namespace ValidationType {
 		/**
 		 * check & parse `value` to number
 		 */
-		Number(value: any): ValidationType.ReturnDataType;
+		Number(value: any): ReturnDataType;
 		/**
 		 * check & parse `value` to float
 		 */
-		Float(value: any): ValidationType.ReturnDataType;
+		Float(value: any): ReturnDataType;
 		/**
 		 * check & parse `value` to string
 		 */
-		String(value: any): ValidationType.ReturnDataType;
+		String(value: any): ReturnDataType;
+		/**
+		 * check & parse `value` to boolean
+		 */
+		Boolean(value: any): ReturnDataType;
 		/**
 		 * validation datatype with `ValidationType.Type`, like `Number(value: any)` and more
 		 */
 		handler(
-			choice: ValidationType.choice,
-			type: 'Number' | 'Float' | 'String',
+			choice: choice,
+			type: 'Number' | 'Float' | 'String' | 'Boolean',
 			fullName: string,
 			value: any,
-			stats: ValidationType.Stats,
-		): ValidationType.ReturnHandler;
+			stats: Stats,
+		): ReturnHandler;
 		/**
 		 * shorthand to validate number
 		 */
 		validateNumber(
-			choice: ValidationType.choice,
+			choice: choice,
 			fullName: string,
 			value: any,
-			stats: ValidationType.Stats,
+			stats: Stats,
 		): number | string;
 		/**
 		 * shorthand to validate number
 		 */
 		validateFloat(
-			choice: ValidationType.choice,
+			choice: choice,
 			fullName: string,
 			value: any,
-			stats: ValidationType.Stats,
+			stats: Stats,
 		): number | string;
+		/**
+		 * shorthand to validate boolean
+		 */
+		validateBoolean(
+			choice: choice,
+			fullName: string,
+			value: any,
+			stats: Stats,
+		): boolean | string | number;
 		/**
 		 * shorthand to validate string
 		 */
 		validateString(
-			choice: ValidationType.choice,
+			choice: choice,
 			fullName: string,
 			value: any,
-			stats: ValidationType.Stats,
+			stats: Stats,
 		): number | string;
 		/**
 		 * shorthand to validate is required
 		 */
 		validateRequired(
-			choice: ValidationType.choice,
+			choice: choice,
 			property: string[],
-			stats: ValidationType.Stats,
+			stats: Stats,
 			config: OptionType.Config,
 			options: any,
 		): boolean;
@@ -590,20 +612,20 @@ export namespace ValidationType {
 		 * shorthand to validate include
 		 */
 		validateInclude(
-			choice: ValidationType.choice,
+			choice: choice,
 			fullName: string,
 			value: any,
-			stats: ValidationType.Stats,
+			stats: Stats,
 			config: ArgumentType.Config | OptionType.Config,
 		): boolean;
 		/**
 		 * shorthand to validate exclude
 		 */
 		validateExclude(
-			choice: ValidationType.choice,
+			choice: choice,
 			fullName: string,
 			value: any,
-			stats: ValidationType.Stats,
+			stats: Stats,
 			config: ArgumentType.Config | OptionType.Config,
 		): boolean;
 		/**
@@ -613,7 +635,7 @@ export namespace ValidationType {
 			instance: string,
 			key: string,
 			value: any,
-			stats: ValidationType.Stats,
+			stats: Stats,
 			config: ArgumentType.Config | OptionType.Config,
 		): any;
 	}

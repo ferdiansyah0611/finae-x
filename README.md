@@ -80,16 +80,16 @@ It uses the hook method to register callback functions for events such as pre-ac
 
 ```ts
 program.hook('preAction', (_cmd) => {
-	console.log("preAction")
+	console.log('preAction');
 });
 program.hook('postAction', (_cmd) => {
-	console.log("postAction")
+	console.log('postAction');
 });
 program.hook('preError', (_cmd) => {
-	console.log("preError")
+	console.log('preError');
 });
 program.hook('postError', (_cmd) => {
-	console.log("postError")
+	console.log('postError');
 });
 ```
 
@@ -129,7 +129,7 @@ program
 The program has a root command named "root" with a description. It also has two sub-commands: "sub" and "world". When the "sub" command is executed, it prints "sub" to the console. Similarly, when the "world" command is executed, it prints "world" to the console. Additionally, the "down" command is a sub-command of "root" and has its own sub-command "data".
 
 ```ts
-const root = program.command('root', 'description')
+const root = program.command('root', 'description');
 // it will be 'root sub'
 root
 	.command('sub', 'description')
@@ -139,7 +139,7 @@ root
 	.command('world', 'description')
 	.action(() => console.log('world'));
 
-const down = root.command('down', 'description')
+const down = root.command('down', 'description');
 // it will be 'root down data'
 down.command('data').action(() => console.log('data'));
 ```
@@ -152,9 +152,10 @@ The "side" command is defined with a description. By using the allowUnknownOptio
 program
 	.command('side', 'description')
 	.allowUnknownOption()
-	.option('--name', 'description')
-	// ...
+	.option('--name', 'description');
+// ...
 ```
+
 #### Execution
 
 The program has a root command named "root" with a description. When the command is executed, it prints "root" to the console. The execute() method is used to trigger the execution of the command, and it takes an object containing arguments and options as parameters. In this example, no arguments or options are passed.
@@ -166,7 +167,7 @@ const root = program
 
 await root.execute({
 	argument: [],
-	options: {}
+	options: {},
 });
 ```
 
@@ -194,7 +195,7 @@ program
 	.command('main', 'description')
 	.argument('str', 'description', (cls) => cls.string('default'))
 	.argument('number', 'description', (cls) => cls.number(100))
-	.argument('float', 'description', (cls) => cls.float(10.10))
+	.argument('float', 'description', (cls) => cls.float(10.10));
 ```
 
 #### Include
@@ -204,7 +205,7 @@ Supports selection based on parameter data.
 ```ts
 program
 	.command('main', 'description')
-	.argument('style', 'description', (cls) => cls.include(['css', 'less', 'sass', 'scss']))
+	.argument('style', 'description', (cls) => cls.include(['css', 'less', 'sass', 'scss']));
 ```
 
 #### Exclude
@@ -214,7 +215,7 @@ Supports exceptions based on parameter data.
 ```ts
 program
 	.command('main', 'description')
-	.argument('format', 'description', (cls) => cls.exclude(['mp3', 'mp4']))
+	.argument('format', 'description', (cls) => cls.exclude(['mp3', 'mp4']));
 ```
 
 #### Variadic
@@ -225,7 +226,6 @@ Supports unlimited values, making it an array.
 program
 	.command('main', 'description')
 	.argument('name', 'description', (cls) => cls.variadic())
-	.argument('number', 'description', (cls) => cls.number().variadic())
 ```
 
 #### Custom Validator
@@ -235,10 +235,11 @@ Supports custom validation, must return a value.
 ```ts
 program
 	.command('main', 'description')
-	.argument('name', 'description', (cls) => cls.validator((value) => {
-		if (typeof value === 'string' && value.includes('xxx')) return value.replaceAll('xxx', '[removed]');
-		return value;
-	}))
+	.argument('name', 'description', (cls) =>
+		cls.validator((value) => {
+			if (typeof value === 'string' && value.includes('xxx')) return value.replaceAll('xxx', '[removed]');
+			return value;
+		}));
 ```
 
 ### Option
@@ -258,14 +259,15 @@ program
 
 #### Type
 
-There are several data types such as string, float, and number. String as default type.
+There are several data types such as string, boolean, float, and number. String as default type.
 
 ```ts
 program
 	.command('main', 'description')
 	.option('str', 'description', (cls) => cls.string('default'))
 	.option('number', 'description', (cls) => cls.number(100))
-	.option('float', 'description', (cls) => cls.float(10.10))
+	.option('float', 'description', (cls) => cls.float(10.10));
+	.option('is', 'description', (cls) => cls.boolean());
 ```
 
 #### Include
@@ -275,7 +277,7 @@ Supports selection based on parameter data.
 ```ts
 program
 	.command('main', 'description')
-	.option('style', 'description', (cls) => cls.include(['css', 'less', 'sass', 'scss']))
+	.option('style', 'description', (cls) => cls.include(['css', 'less', 'sass', 'scss']));
 ```
 
 #### Exclude
@@ -285,7 +287,7 @@ Supports exceptions based on parameter data.
 ```ts
 program
 	.command('main', 'description')
-	.option('format', 'description', (cls) => cls.exclude(['mp3', 'mp4']))
+	.option('format', 'description', (cls) => cls.exclude(['mp3', 'mp4']));
 ```
 
 #### Variadic
@@ -296,7 +298,7 @@ Supports unlimited values, making it an array.
 program
 	.command('main', 'description')
 	.option('name', 'description', (cls) => cls.variadic())
-	.option('number', 'description', (cls) => cls.number().variadic())
+	.option('number', 'description', (cls) => cls.number().variadic());
 ```
 
 #### Custom Validator
@@ -306,10 +308,11 @@ Supports custom validation, must return a value.
 ```ts
 program
 	.command('main', 'description')
-	.option('name', 'description', (cls) => cls.validator((value) => {
-		if (typeof value === 'string' && value.includes('xxx')) return value.replaceAll('xxx', '[removed]');
-		return value;
-	}))
+	.option('name', 'description', (cls) =>
+		cls.validator((value) => {
+			if (typeof value === 'string' && value.includes('xxx')) return value.replaceAll('xxx', '[removed]');
+			return value;
+		}));
 ```
 
 #### Conflicts
@@ -320,7 +323,7 @@ Commands will give an error if these options run simultaneously.
 program
 	.command('main', 'description')
 	.option('port', 'description', (cls) => cls.conflicts(['default-port']))
-	.option('default-port', 'description')
+	.option('default-port', 'description');
 ```
 
 #### Implies
@@ -330,8 +333,8 @@ Options will provide a default value to the specified options if the options do 
 ```ts
 program
 	.command('main', 'description')
-	.option('port', 'description', (cls) => cls.conflicts(['default-port']))
-	.option('default-port', 'description')
+	.option('port', 'description', (cls) => cls.implies(['default-port']))
+	.option('default-port', 'description');
 ```
 
 #### Required
@@ -341,7 +344,17 @@ Commands will give an error if the options do not have a value.
 ```ts
 program
 	.command('main', 'description')
-	.option('port', 'description', (cls) => cls.required())
+	.option('port', 'description', (cls) => cls.required());
+```
+
+#### ENV
+
+Options will provide a default value to the specified environment if the options do not have a value during execution.
+
+```ts
+program
+	.command('main', 'description')
+	.option('port', 'description', (cls) => cls.env('PORT'));
 ```
 
 #### Hidden from Help
@@ -351,7 +364,7 @@ Hides options from help output.
 ```ts
 program
 	.command('main', 'description')
-	.option('name', 'description', (cls) => cls.hideHelp())
+	.option('name', 'description', (cls) => cls.hideHelp());
 ```
 
 ### Help
@@ -363,7 +376,7 @@ Explain the use of help:
 Customize synopsis and description for help.
 
 ```ts
-program.helpOption('-h, --helper', "show help command");
+program.helpOption('-h, --helper', 'show help command');
 ```
 
 #### Custom Section
@@ -372,7 +385,7 @@ You can add section output help with specified position `'afterArgument' | 'afte
 
 ```ts
 const data = [
-	['title', 'a'.repeat(50)]
+	['title', 'a'.repeat(50)],
 ];
 program.makeSectionHelp('afterArgument', 'afterArgument:', null, data);
 program.makeSectionHelp('afterCommand', 'afterCommand:', null, data);
@@ -387,6 +400,7 @@ Support manual to show help, pass `false` to argument to get output.
 
 ```ts
 program.showHelp();
+
 const output = program.showHelp(false);
 console.log(output);
 ```

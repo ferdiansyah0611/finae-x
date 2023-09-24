@@ -7,7 +7,7 @@ import message from '@/src/helpers/message.ts';
 let instance;
 const description = 'description';
 const compareType = (cls: ArgumentType.Type, type: string) => assertEquals(cls.getInformation().config.type, type);
-const compareDefault = (cls: ArgumentType.Type, value: string | number) =>
+const compareDefault = (cls: ArgumentType.Type, value: string | number | boolean) =>
 	assertEquals(cls.getInformation().config.default, value);
 
 Deno.test('Option Test', async (t) => {
@@ -54,6 +54,18 @@ Deno.test('Option Test', async (t) => {
 
 		instance.float(10.10);
 		compareDefault(instance, 10.10);
+
+		const result = instance.doValidation(fake);
+		assertEquals(result.data, fake);
+	});
+	await t.step('can boolean type', () => {
+		const fake = { flag: true };
+		instance = new Option('flag', description);
+		instance.boolean();
+		compareType(instance, 'Boolean');
+
+		instance.boolean(true);
+		compareDefault(instance, true);
 
 		const result = instance.doValidation(fake);
 		assertEquals(result.data, fake);
@@ -310,5 +322,12 @@ Deno.test('Option Test', async (t) => {
 
 		const info = instance.getInformation();
 		assertEquals(info.config.isHidden, true);
+	});
+	await t.step('can with env', () => {
+		instance = new Option('name', description);
+		instance.env('NAME');
+
+		const info = instance.getInformation();
+		assertEquals(info.config.env, 'NAME');
 	});
 });

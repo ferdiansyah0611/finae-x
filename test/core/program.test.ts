@@ -1,6 +1,7 @@
 // deno-lint-ignore-file no-explicit-any
 import { Program } from '@/mod.ts';
 import { assertEquals } from 'https://deno.land/std@0.201.0/assert/assert_equals.ts';
+import { HelpType } from '@/types.d.ts';
 
 let response = null;
 const description = 'description';
@@ -109,14 +110,16 @@ Deno.test('Program Test', async (t) => {
 	});
 
 	await t.step('do make section help', () => {
+		const position: HelpType.Position[] = ['afterArgument', 'afterCommand', 'afterOption', 'firstLine', 'lastLine']
 		const data = [
-			['title', 'a'.repeat(50)]
+			['title', 'a'.repeat(50)],
 		];
-		program.makeSectionHelp('afterArgument', 'afterArgument:', null, data);
-		program.makeSectionHelp('afterCommand', 'afterCommand:', null, data);
-		program.makeSectionHelp('afterOption', 'afterOption:', null, data);
-		program.makeSectionHelp('firstLine', 'firstLine:', null, data);
-		program.makeSectionHelp('lastLine', 'lastLine:', null, data);
-		program.showHelp();
+		for (const pos of position) {
+			program.makeSectionHelp(pos, pos + ':', null, data);
+		}
+		const result = program.showHelp(false);
+		for (const pos of position) {
+			assertEquals(result.includes(pos), true);
+		}
 	});
 });

@@ -2,10 +2,6 @@
 import { ProgramType } from '@/types.d.ts';
 import { Program } from '@/mod.ts';
 
-Deno.stdout.write(
-	new TextEncoder().encode('\x1b[2J'),
-);
-
 const description = 'this is description';
 const config: any = {};
 config.stderr = () => {};
@@ -20,8 +16,8 @@ const actionOption = (options: any) => {
 const actionAll = (argument: any, options: any) => {
 	return { argument, options };
 };
-const customValidator = (value: number|string) => {
-	if (typeof value === "string" && value.startsWith('xxx')) instance.error('Word not allowed');
+const customValidator = (value: number | string) => {
+	if (typeof value === 'string' && value.startsWith('xxx')) instance.error('Word not allowed');
 	return value;
 };
 
@@ -129,6 +125,10 @@ instance
 instance
 	.command('option:float', description)
 	.option('numeric', description, (cls) => cls.float())
+	.action(actionOption);
+instance
+	.command('option:boolean', description)
+	.option('flag', description, (cls) => cls.boolean())
 	.action(actionOption);
 instance
 	.command('option:include', description)
@@ -295,4 +295,5 @@ instance
 	)
 	.action(actionAll);
 
+export const maker = (cmd: string, callback: any) => ({ cmd, callback });
 export default instance;
