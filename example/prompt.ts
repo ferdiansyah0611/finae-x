@@ -1,6 +1,5 @@
 // deno-lint-ignore-file no-explicit-any
 import { Program } from '@/mod.ts';
-import { createPrompt } from '@/pkg/prompt.ts';
 
 const program = new Program('Prompt CLI', 'prompt example', {
 	version: '1.0.0',
@@ -23,4 +22,15 @@ program
 		console.log(argument);
 	});
 
-createPrompt(program);
+
+createPrompt();
+
+function createPrompt() {
+	async function main() {
+		const value = prompt('>');
+		if (value === 'exit') return;
+		if (value) await program.exec(value);
+		main();
+	}
+	main();
+}

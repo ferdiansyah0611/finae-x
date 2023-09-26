@@ -110,6 +110,7 @@ class Command implements CommandType.Type {
 	// deno-lint-ignore no-explicit-any
 	async execute(data?: any): Promise<any> {
 		if (this.#action) {
+			if (!data) data = {};
 			this.arg = data.argument || [];
 			this.opt = data.options || {};
 			if (data.argument && Object.keys(data.argument) && data.options) {
@@ -117,7 +118,7 @@ class Command implements CommandType.Type {
 			} else if (data.argument && Object.keys(data.argument)) {
 				return await this.#action(data.argument, this);
 			} else if (data.options) return await this.#action(data.options, this);
-			else await this.#action();
+			else return await this.#action();
 		} else {
 			const err = sprintf(message.error.actionNotFound, this.#name);
 			this.#program.error(err);
