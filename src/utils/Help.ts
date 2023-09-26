@@ -101,7 +101,8 @@ export default class Help implements HelpType.Type {
 			len.commands = collection.commands.map((v) => v.getInformation().name.length);
 		}
 		if (this.#info.isCommand) {
-			text = text.replace(usagePattern, '$1 ' + this.#info.name);
+			const alias = this.#command?.getAlias();
+			text = text.replace(usagePattern, '$1 ' + this.#info.name + (alias?.length ? textAlias(alias) : ''));
 		}
 
 		if (setup.sectionHelp) {
@@ -186,9 +187,11 @@ export default class Help implements HelpType.Type {
 			let result: string[] | string = collection[key]
 				.map((item: ItemType, index: number) => {
 					const selector = selectorCallback(item);
-					if (key === 'commands' && this.#info.isCommand) {
-						selector.title = selector.title.replace(this.#info.name, '') +
-							' '.repeat(this.#info.name.length);
+					if (key === 'commands') {
+						if (this.#info.isCommand) {
+							selector.title = selector.title.replace(this.#info.name, '') +
+								' '.repeat(this.#info.name.length);
+						}
 					}
 
 					const remain = max - len[key][index];
@@ -278,4 +281,8 @@ export default class Help implements HelpType.Type {
 	#isCore(key: string): boolean {
 		return ['arguments', 'commands', 'options'].includes(key);
 	}
+}
+
+function textAlias(alias: string[]) {
+	return `|${alias.join('|')}`;
 }

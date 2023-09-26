@@ -203,8 +203,8 @@ export default class Option implements OptionType.Type {
 		this.default(defaults);
 		return this;
 	}
-	boolean(defaults?: boolean|undefined): OptionType.Type {
-	    this.#config.type = 'Boolean';
+	boolean(defaults?: boolean | undefined): OptionType.Type {
+		this.#config.type = 'Boolean';
 		this.default(defaults);
 		return this;
 	}
@@ -241,8 +241,8 @@ export default class Option implements OptionType.Type {
 		return this;
 	}
 	env(name: string): OptionType.Type {
-		if (!env[name]) throw Error(sprintf("environment '%s' is not set", name));
-	    this.#config.env = name;
-	    return this;
+		if (!env[name]) throw Error(sprintf('environment \'%s\' is not set', name));
+		this.#config.env = name;
+		return this;
 	}
 }

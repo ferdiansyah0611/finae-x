@@ -12,6 +12,7 @@ class Command implements CommandType.Type {
 	#name: string;
 	#description: string;
 	#config: CommandType.Config = {};
+	#aliasName?: string[];
 
 	#arguments: ArgumentType.Type[] = [];
 	#options: OptionType.Type[] = [];
@@ -55,6 +56,9 @@ class Command implements CommandType.Type {
 	getNestedKey(): number[] {
 		return this.#nested;
 	}
+	getAlias(): string[] {
+		return this.#aliasName || [];
+	}
 
 	command(
 		name: string,
@@ -90,6 +94,11 @@ class Command implements CommandType.Type {
 		if (callback) callback(cls);
 		this.#options.push(cls);
 
+		return this;
+	}
+
+	alias(...name: string[]): CommandType.Type {
+		this.#aliasName = name;
 		return this;
 	}
 

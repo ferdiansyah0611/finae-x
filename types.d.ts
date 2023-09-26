@@ -228,6 +228,15 @@ export namespace CommandType {
 		 * Get unknown options on the current command instance
 		 */
 		getUnknownOption(): any;
+		/**
+		 * Set alias command
+		 * @param name - multiple alias name
+		 */
+		alias(...name: string[]): Type;
+		/**
+		 * Get alias command
+		 */
+		getAlias(): string[];
 	}
 	/**
 	 * Represents information about a command.
@@ -688,5 +697,5 @@ export namespace MessageType {
 		mustHaveOneLength: string;
 		isConflictsOption: string;
 		suggest: string;
-	}
+	};
 }

@@ -15,7 +15,7 @@ const message = {
 	},
 	update(error: MessageType.Error) {
 		Object.assign(this.error, error);
-	}
+	},
 };
 
 export default message;

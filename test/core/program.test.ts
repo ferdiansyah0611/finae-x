@@ -110,7 +110,7 @@ Deno.test('Program Test', async (t) => {
 	});
 
 	await t.step('do make section help', () => {
-		const position: HelpType.Position[] = ['afterArgument', 'afterCommand', 'afterOption', 'firstLine', 'lastLine']
+		const position: HelpType.Position[] = ['afterArgument', 'afterCommand', 'afterOption', 'firstLine', 'lastLine'];
 		const data = [
 			['title', 'a'.repeat(50)],
 		];

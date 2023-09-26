@@ -146,10 +146,20 @@ class Program implements ProgramType.Type {
 		const result: number[] = [];
 		for (const cmd of this.#commands) {
 			const data = cmd.getInformation();
+			const alias = cmd.getAlias();
 			const splits = data.name.split(' ');
 			let counter = 0;
+			let aliasCounter = 0;
 			for (const index in splits) {
 				if (argument[index] === splits[index]) counter += 1;
+			}
+			if (alias.length) {
+				for (const index in argument) {
+					if (alias.includes(argument[index])) aliasCounter += 1;
+				}
+				if (aliasCounter >= counter) {
+					counter = aliasCounter;
+				}
 			}
 			result.push(counter);
 		}
@@ -185,7 +195,7 @@ class Program implements ProgramType.Type {
 		if (isHelp()) {
 			return this.#response(currentCommand.showHelp(), null);
 		}
-		console.log(isHelp())
+		console.log(isHelp());
 		// check argument
 		for (let i = 0; i < information.arguments.length; i++) {
 			const current = information.arguments[i];

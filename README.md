@@ -32,9 +32,9 @@ program
 	.command('satset', 'description')
 	.argument('name', 'description')
 	.option('name', 'description')
-	.action(function() {
-		console.log(this.arg)
-		console.log(this.opt)
+	.action(function () {
+		console.log(this.arg);
+		console.log(this.opt);
 	});
 
 await program.exec('main');
@@ -179,6 +179,17 @@ await root.execute({
 });
 ```
 
+#### Alias
+
+Command support multiple aliases.
+
+```ts
+program
+	.command('install', 'description')
+	.alias('i', 'in')
+	.action(() => console.log('install'));
+```
+
 ### Argument
 
 Explain the use of argument:
@@ -233,7 +244,7 @@ Supports unlimited values, making it an array.
 ```ts
 program
 	.command('main', 'description')
-	.argument('name', 'description', (cls) => cls.variadic())
+	.argument('name', 'description', (cls) => cls.variadic());
 ```
 
 #### Custom Validator
@@ -330,8 +341,9 @@ Commands will give an error if these options run simultaneously.
 ```ts
 program
 	.command('main', 'description')
-	.option('port', 'description', (cls) => cls.conflicts(['default-port']))
+	.option('port', 'description', (cls) => cls.conflicts('default-port', 'default-config'))
 	.option('default-port', 'description');
+	.option('default-config', 'description');
 ```
 
 #### Implies
@@ -341,7 +353,7 @@ Options will provide a default value to the specified options if the options do 
 ```ts
 program
 	.command('main', 'description')
-	.option('port', 'description', (cls) => cls.implies({'default-port': 3721}))
+	.option('port', 'description', (cls) => cls.implies({ 'default-port': 3721 }))
 	.option('default-port', 'description');
 ```
 
@@ -424,7 +436,7 @@ Activate this feature if you want to add an error message to a suggestion.
 ```ts
 const program = new Program('MY CLI', 'description', {
 	version: '1.0.0',
-	suggestAfterError: true
+	suggestAfterError: true,
 });
 ```
 
@@ -453,9 +465,9 @@ const program = new Program('MY CLI', 'description', {
 	version: '1.0.0',
 	stderr(error) {
 		if (Array.isArray(error)) {
-			error = error.map(value => value.replace('Arguments', 'Argumen').replace('Options', 'Pilihan'))
+			error = error.map((value) => value.replace('Arguments', 'Argumen').replace('Options', 'Pilihan'));
 		}
-	    stderr(error)
+		stderr(error);
 	},
 });
 ```
