@@ -116,31 +116,20 @@ export default class Help implements HelpType.Type {
 			}
 		}
 
-		const maxAll = [
-			...len.arguments,
-			...len.commands,
-			...len.options,
-			...len.afterArgument,
-			...len.afterCommand,
-			...len.afterOption,
-			...len.firstLine,
-			...len.lastLine,
-		];
-		const max = Math.max(...maxAll);
 		const columns = this.getColumns();
 		/**
 		 * create empty text for one columns
 		 */
-		const oneColumnEmpty = () => '\n' + ' '.repeat(max + 2) + '\t';
+		const oneColumnEmpty = (max: number) => '\n' + ' '.repeat(max + 2) + '\t';
 		/**
 		 * create text on column two
 		 */
-		const twoColumn = (oneColVal: string, curentValue: string): string => {
+		const twoColumn = (max: number, oneColVal: string, curentValue: string): string => {
 			let value = '';
 			for (let i = 0; i < curentValue.length; i++) {
 				value += curentValue[i];
 				if (Number.isInteger(i / (columns - oneColVal.length)) && i !== 0) {
-					value += oneColumnEmpty();
+					value += oneColumnEmpty(max);
 				}
 			}
 			return value;
@@ -154,12 +143,13 @@ export default class Help implements HelpType.Type {
 				let output = '';
 				for (const section of setup.sectionHelp[position]) {
 					if (allowToMakeSection(section)) {
+						const max = Math.max(...section.data.map(data => data.title.length));
 						const results: string = section.data.map(
 							(item: { title: string; description: string }, index: number) => {
 								const remain = max - len[position][index];
 								const title = cyan(item.title) + ' '.repeat(remain) + '\t';
 								const group = title + item.description;
-								const value = twoColumn(title, group);
+								const value = twoColumn(max, title, group);
 								return sprintf('  %s%s', value, group.length > columns ? '\n' : '');
 							},
 						).join('\n');
@@ -183,6 +173,7 @@ export default class Help implements HelpType.Type {
 				item: ItemType,
 			) => SectionCallbackReturn,
 		) => {
+			const max = Math.max(...len[key]);
 			const isCore = this.#isCore(key);
 			let result: string[] | string = collection[key]
 				.map((item: ItemType, index: number) => {
@@ -198,24 +189,24 @@ export default class Help implements HelpType.Type {
 					const title = cyan(selector.title) + ' '.repeat(remain) + '\t';
 					// wrapping text
 					const group = title + selector.description;
-					let newText = twoColumn(title, group);
+					let newText = twoColumn(max, title, group);
 
 					if (isCore) {
 						const config = item.getInformation().config;
 						if (config.default) {
-							newText += oneColumnEmpty();
-							newText += twoColumn(title, sprintf('%s %s', blue('default  :'), config.default));
+							newText += oneColumnEmpty(max);
+							newText += twoColumn(max, title, sprintf('%s %s', blue('default  :'), config.default));
 						}
 						if (config.include && config.include.length) {
-							newText += oneColumnEmpty();
-							newText += twoColumn(
+							newText += oneColumnEmpty(max);
+							newText += twoColumn(max, 
 								title,
 								sprintf('%s [%s]', blue('includes :'), config.include.join(', ')),
 							);
 						}
 						if (config.exclude && config.exclude.length) {
-							newText += oneColumnEmpty();
-							newText += twoColumn(
+							newText += oneColumnEmpty(max);
+							newText += twoColumn(max, 
 								title,
 								sprintf('%s [%s]', blue('excludes :'), config.exclude.join(', ')),
 							);
