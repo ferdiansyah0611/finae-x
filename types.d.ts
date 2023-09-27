@@ -71,7 +71,7 @@ export namespace ProgramType {
 		 * @param key - set command name to `key` to run specified command
 		 * @param data - text of section `[["row 1", "description"]]`
 		 */
-		makeSectionHelp(position: HelpType.Position, name: string, key: string | null, data: string[][]): Type;
+		makeSectionHelp(position: HelpType.Position, name: string | null, key: string | null, data: string[][], raw?: string): Type;
 	}
 	/**
 	 * Represents return parse
@@ -534,9 +534,10 @@ export namespace HelpType {
 	 * Represents a custom section help.
 	 */
 	type ItemSection = {
-		name: string;
+		name: string | null;
 		key: string | null;
 		data: ItemSectionData[];
+		raw?: string;
 	};
 	/**
 	 * Represents a item for custom section help.

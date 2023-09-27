@@ -143,17 +143,25 @@ export default class Help implements HelpType.Type {
 				let output = '';
 				for (const section of setup.sectionHelp[position]) {
 					if (allowToMakeSection(section)) {
-						const max = Math.max(...section.data.map(data => data.title.length));
-						const results: string = section.data.map(
-							(item: { title: string; description: string }, index: number) => {
-								const remain = max - len[position][index];
-								const title = cyan(item.title) + ' '.repeat(remain) + '\t';
-								const group = title + item.description;
-								const value = twoColumn(max, title, group);
-								return sprintf('  %s%s', value, group.length > columns ? '\n' : '');
-							},
-						).join('\n');
-						const outputs = '\n' + section.name + '\n\n' + results + '\n';
+						let results = '';
+						let outputs = '';
+						if (section.raw) {
+							results = section.raw;
+							outputs = results;
+						} else {
+							const max = Math.max(...section.data.map(data => data.title.length));
+							results = section.data.map(
+								(item: { title: string; description: string }, index: number) => {
+									const remain = max - len[position][index];
+									const title = cyan(item.title) + ' '.repeat(remain) + '\t';
+									const group = title + item.description;
+									const value = twoColumn(max, title, group);
+									return sprintf('  %s%s', value, group.length > columns ? '\n' : '');
+								},
+							).join('\n');
+							outputs = '\n' + section.name + '\n\n' + results + '\n';
+						}
+
 						if (results.length && !isOutput) {
 							appendText += outputs;
 						} else {

@@ -281,7 +281,7 @@ class Program implements ProgramType.Type {
 		}
 	}
 
-	makeSectionHelp(position: HelpType.Position, name: string, key: string | null, data: string[][]): ProgramType.Type {
+	makeSectionHelp(position: HelpType.Position, name: string | null, key: string | null, data: string[][], raw?: string): ProgramType.Type {
 		if (!this.#setup.sectionHelp) {
 			this.#setup.sectionHelp = {
 				afterArgument: [],
@@ -291,14 +291,16 @@ class Program implements ProgramType.Type {
 				lastLine: [],
 			};
 		}
-		this.#setup.sectionHelp[position].push({
+		const commit: HelpType.ItemSection = {
 			name,
 			key,
 			data: data.map((item) => ({
 				title: item[0],
 				description: item[1],
 			})),
-		});
+		};
+		if (raw) commit.raw = raw;
+		this.#setup.sectionHelp[position].push(commit);
 		return this;
 	}
 	#response(stdout: CommandType.ReturnExecution, stderr: string[] | string | null) {
