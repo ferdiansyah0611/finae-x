@@ -2,6 +2,7 @@
 
 Finae-X is a command-line interface (CLI) tool that allows you to perform various tasks and operations from the command line. It provides a simple and intuitive way to interact with your applications and execute commands.
 
+- [Installation](#installation)
 - [Quick Start](#quick-start)
 - [Documentation](#documentation)
   - [Program](#program)
@@ -44,12 +45,24 @@ Finae-X is a command-line interface (CLI) tool that allows you to perform variou
     - [Suggest After Error](#suggest-after-error)
     - [Custom Error Message](#custom-error-message)
 
+## Installation
+
+Add imports path to deno.json
+
+```json
+{
+	"imports": {
+		"finae-x/": "https://cdn.jsdelivr.net/gh/ferdiansyah0611/finae-x/"
+	}
+}
+```
+
 ## Quick Start
 
 To quickly get started with Finae-X, you can follow the code snippet above. It demonstrates how to use the Program class to create a CLI program and define commands, arguments, and options.
 
 ```ts
-import { Program } from '@/mod.ts';
+import { Program } from 'finae-x/mod.ts';
 
 const program = new Program('MY CLI', 'description', {
 	version: '1.0.0',
@@ -96,7 +109,7 @@ Explain the use of program:
 It imports the Program class from the specified module and creates a new instance of the program with the given name, description, and version.
 
 ```ts
-import { Program } from '@/mod.ts';
+import { Program } from 'finae-x/mod.ts';
 
 const program = new Program('MY CLI', 'description', {
 	version: '1.0.0',
@@ -496,8 +509,8 @@ const program = new Program('MY CLI', 'description', {
 You can change the error message with the specified key.
 
 ```ts
-import message from '@/src/helpers/message.ts';
-import stderr from '@/src/helpers/stderr.ts';
+import message from 'finae-x/src/helpers/message.ts';
+import stderr from 'finae-x/src/helpers/stderr.ts';
 
 message.update({
 	isRequired: '%s \'%s\' harus di isi',
