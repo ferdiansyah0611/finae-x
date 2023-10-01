@@ -1,7 +1,7 @@
-import { ArgumentType, ValidationType } from '@/types.d.ts';
-import validation from '@/src/helpers/validation.ts';
-import { sprintf } from 'printf';
-import message from '@/src/helpers/message.ts';
+import { ArgumentType, ValidationType } from '../../types.d.ts';
+import validation from '../helpers/validation.ts';
+import { sprintf } from '../package/printf.ts';
+import message from '../helpers/message.ts';
 
 export default class Argument implements ArgumentType.Type {
 	#synopsis: string;

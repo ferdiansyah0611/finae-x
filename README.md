@@ -472,10 +472,16 @@ program.makeSectionHelp('lastLine', 'lastLine:', null, data);
 Raw text support with empty name and data.
 
 ```ts
-program.makeSectionHelp('afterArgument', null, null, [], `
+program.makeSectionHelp(
+	'afterArgument',
+	null,
+	null,
+	[],
+	`
 Important!
 This is raw text
-`)
+`,
+);
 ```
 
 #### Manual Show Help

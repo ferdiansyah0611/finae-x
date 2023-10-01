@@ -1,4 +1,4 @@
-import { MessageType } from '@/types.d.ts';
+import { MessageType } from '../../types.d.ts';
 
 const message = {
 	error: {

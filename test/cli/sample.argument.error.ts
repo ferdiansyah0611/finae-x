@@ -1,5 +1,5 @@
-import { ProgramType } from '@/types.d.ts';
-import { ErrorArgument } from '@/test/Test.ts';
+import { ProgramType } from '../../types.d.ts';
+import { ErrorArgument } from '../Test.ts';
 
 const sampleArgumentError = [
 	(response: ProgramType.ReturnExec) => {

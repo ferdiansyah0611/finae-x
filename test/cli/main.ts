@@ -1,6 +1,6 @@
 // deno-lint-ignore-file no-explicit-any
-import { ProgramType } from '@/types.d.ts';
-import { Program } from '@/mod.ts';
+import { ProgramType } from '../../types.d.ts';
+import { Program } from '../../mod.ts';
 
 const description = 'this is description';
 const config: any = {};

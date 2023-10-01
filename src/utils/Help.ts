@@ -1,6 +1,6 @@
-import { blue, cyan } from 'colors';
-import { sprintf } from 'printf';
-import { ArgumentType, CommandType, HelpType, OptionType, ProgramType } from '@/types.d.ts';
+import { blue, cyan } from '../package/colors.ts';
+import { sprintf } from '../package/printf.ts';
+import { ArgumentType, CommandType, HelpType, OptionType, ProgramType } from '../../types.d.ts';
 
 // deno-lint-ignore no-explicit-any
 type ItemType = ArgumentType.Type | CommandType.Type | OptionType.Type | any;
@@ -149,7 +149,7 @@ export default class Help implements HelpType.Type {
 							results = section.raw;
 							outputs = results;
 						} else {
-							const max = Math.max(...section.data.map(data => data.title.length));
+							const max = Math.max(...section.data.map((data) => data.title.length));
 							results = section.data.map(
 								(item: { title: string; description: string }, index: number) => {
 									const remain = max - len[position][index];
@@ -207,14 +207,16 @@ export default class Help implements HelpType.Type {
 						}
 						if (config.include && config.include.length) {
 							newText += oneColumnEmpty(max);
-							newText += twoColumn(max, 
+							newText += twoColumn(
+								max,
 								title,
 								sprintf('%s [%s]', blue('includes :'), config.include.join(', ')),
 							);
 						}
 						if (config.exclude && config.exclude.length) {
 							newText += oneColumnEmpty(max);
-							newText += twoColumn(max, 
+							newText += twoColumn(
+								max,
 								title,
 								sprintf('%s [%s]', blue('excludes :'), config.exclude.join(', ')),
 							);

@@ -1,4 +1,4 @@
-import { Program } from '@/mod.ts';
+import { Program } from '../mod.ts';
 
 const program = new Program('Drink CLI', 'An application for drink ordering', {
 	version: '1.0.0',

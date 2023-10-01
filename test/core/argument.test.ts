@@ -1,8 +1,8 @@
-import { Argument } from '@/mod.ts';
 import { assertEquals } from 'https://deno.land/std@0.201.0/assert/assert_equals.ts';
-import { ArgumentType } from '@/types.d.ts';
-import { sprintf } from 'printf';
-import message from '@/src/helpers/message.ts';
+import { Argument } from '../../mod.ts';
+import { ArgumentType } from '../../types.d.ts';
+import { sprintf } from '../../src/package/printf.ts';
+import message from '../../src/helpers/message.ts';
 
 let instance;
 const description = 'description';

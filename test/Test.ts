@@ -1,9 +1,9 @@
 // deno-lint-ignore-file no-explicit-any
-import message from '@/src/helpers/message.ts';
 import { assertEquals } from 'https://deno.land/std@0.201.0/assert/assert_equals.ts';
-import { sprintf } from 'printf';
-import { ProgramType } from '@/types.d.ts';
-import { TestType } from '@/test/Test.d.ts';
+import { sprintf } from '../src/package/printf.ts';
+import { ProgramType } from '../types.d.ts';
+import { TestType } from './Test.d.ts';
+import message from '../src/helpers/message.ts';
 
 class FactoryMessage implements TestType.ErrorMessage {
 	instance: TestType.Instance;

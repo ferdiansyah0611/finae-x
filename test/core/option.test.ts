@@ -1,13 +1,13 @@
-import { Option } from '@/mod.ts';
 import { assertEquals } from 'https://deno.land/std@0.201.0/assert/assert_equals.ts';
-import { ArgumentType } from '@/types.d.ts';
-import { sprintf } from 'printf';
-import message from '@/src/helpers/message.ts';
+import { OptionType } from '../../types.d.ts';
+import { Option } from '../../mod.ts';
+import { sprintf } from '../../src/package/printf.ts';
+import message from '../../src/helpers/message.ts';
 
 let instance;
 const description = 'description';
-const compareType = (cls: ArgumentType.Type, type: string) => assertEquals(cls.getInformation().config.type, type);
-const compareDefault = (cls: ArgumentType.Type, value: string | number | boolean) =>
+const compareType = (cls: OptionType.Type, type: string) => assertEquals(cls.getInformation().config.type, type);
+const compareDefault = (cls: OptionType.Type, value: string | number | boolean) =>
 	assertEquals(cls.getInformation().config.default, value);
 
 Deno.test('Option Test', async (t) => {

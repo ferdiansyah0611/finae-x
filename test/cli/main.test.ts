@@ -1,8 +1,8 @@
-import instance from '@/test/cli/main.ts';
-import sampleArgument from '@/test/cli/sample.argument.ts';
-import sampleOption from '@/test/cli/sample.option.ts';
-import sampleData from '@/test/cli/sample.data.ts';
-import sampleArgumentError from '@/test/cli/sample.argument.error.ts';
+import instance from './main.ts';
+import sampleArgument from './sample.argument.ts';
+import sampleOption from './sample.option.ts';
+import sampleData from './sample.data.ts';
+import sampleArgumentError from './sample.argument.error.ts';
 
 Deno.test('Core CLI', async (t) => {
 	await t.step('Validation STDOUT', async (t) => {

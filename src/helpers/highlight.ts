@@ -1,4 +1,4 @@
-import { green } from 'colors';
+import { green } from '../package/colors.ts';
 
 // deno-lint-ignore no-explicit-any
 export default function highlight(value: string | any): string {

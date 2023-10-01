@@ -1,5 +1,5 @@
 // deno-lint-ignore-file no-explicit-any
-import { maker } from '@/test/cli/main.ts';
+import { maker } from './main.ts';
 import { assertEquals } from 'https://deno.land/std@0.201.0/assert/assert_equals.ts';
 
 const sampleOption: any[] = [

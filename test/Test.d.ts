@@ -1,5 +1,5 @@
 // deno-lint-ignore-file no-explicit-any
-import { ProgramType } from '@/types.d.ts';
+import { ProgramType } from '../types.d.ts';
 
 export namespace TestType {
 	type Instance = 'Arguments' | 'Options';

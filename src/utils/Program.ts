@@ -1,13 +1,13 @@
-import { sprintf } from 'printf';
-import { CommandType, HelpType, OptionType, ProgramType } from '@/types.d.ts';
-import Command from '@/src/utils/Command.ts';
-import Parse from '@/src/utils/Parse.ts';
-import Help from '@/src/utils/Help.ts';
-import highlight from '@/src/helpers/highlight.ts';
-import message from '@/src/helpers/message.ts';
-import Option from '@/src/utils/Option.ts';
-import suggest from '@/src/helpers/suggest.ts';
-import stderr from '@/src/helpers/stderr.ts';
+import { CommandType, HelpType, OptionType, ProgramType } from '../../types.d.ts';
+import { sprintf } from '../package/printf.ts';
+import Command from './Command.ts';
+import Parse from './Parse.ts';
+import Help from './Help.ts';
+import Option from './Option.ts';
+import highlight from '../helpers/highlight.ts';
+import message from '../helpers/message.ts';
+import suggest from '../helpers/suggest.ts';
+import stderr from '../helpers/stderr.ts';
 
 class Program implements ProgramType.Type {
 	#name: string;
@@ -195,7 +195,6 @@ class Program implements ProgramType.Type {
 		if (isHelp()) {
 			return this.#response(currentCommand.showHelp(), null);
 		}
-		console.log(isHelp());
 		// check argument
 		for (let i = 0; i < information.arguments.length; i++) {
 			const current = information.arguments[i];
@@ -281,7 +280,13 @@ class Program implements ProgramType.Type {
 		}
 	}
 
-	makeSectionHelp(position: HelpType.Position, name: string | null, key: string | null, data: string[][], raw?: string): ProgramType.Type {
+	makeSectionHelp(
+		position: HelpType.Position,
+		name: string | null,
+		key: string | null,
+		data: string[][],
+		raw?: string,
+	): ProgramType.Type {
 		if (!this.#setup.sectionHelp) {
 			this.#setup.sectionHelp = {
 				afterArgument: [],

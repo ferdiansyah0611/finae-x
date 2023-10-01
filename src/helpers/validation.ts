@@ -1,7 +1,7 @@
 // deno-lint-ignore-file no-explicit-any
-import { ArgumentType, OptionType, ValidationType } from '@/types.d.ts';
-import { sprintf } from 'printf';
-import message from '@/src/helpers/message.ts';
+import { ArgumentType, OptionType, ValidationType } from '../../types.d.ts';
+import { sprintf } from '../package/printf.ts';
+import message from './message.ts';
 
 const validation: ValidationType.Type = {
 	Number(value: any): ValidationType.ReturnDataType {

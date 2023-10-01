@@ -6,12 +6,6 @@
 		"test:cli": "deno test test/cli -A",
 		"test:cli:w": "deno test test/cli --watch -A"
 	},
-	"imports": {
-		"@/": "./",
-		"flags": "https://deno.land/std@0.201.0/flags/mod.ts",
-		"colors": "https://deno.land/std@0.201.0/fmt/colors.ts",
-		"printf": "https://deno.land/std@0.201.0/fmt/printf.ts"
-	},
 	"fmt": {
 		"useTabs": true,
 		"lineWidth": 120,

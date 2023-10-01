@@ -1,5 +1,5 @@
-import { Command, Program } from '@/mod.ts';
 import { assertEquals } from 'https://deno.land/std@0.201.0/assert/assert_equals.ts';
+import { Command, Program } from '../../mod.ts';
 
 const description = 'description';
 const program = new Program('Test CLI', description, {

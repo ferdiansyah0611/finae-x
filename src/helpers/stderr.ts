@@ -1,6 +1,6 @@
 // deno-lint-ignore-file
-import { red } from 'colors';
-import highlight from '@/src/helpers/highlight.ts';
+import { red } from '../package/colors.ts';
+import highlight from './highlight.ts';
 
 export default function stderr(value: any[] | any) {
 	if (Array.isArray(value)) {

@@ -1,8 +1,8 @@
-import { CommandType, OptionType, ValidationType } from '@/types.d.ts';
-import { sprintf } from 'printf';
-import validation from '@/src/helpers/validation.ts';
-import message from '@/src/helpers/message.ts';
-import env from '@/src/helpers/env.ts';
+import { CommandType, OptionType, ValidationType } from '../../types.d.ts';
+import { sprintf } from '../package/printf.ts';
+import validation from '../helpers/validation.ts';
+import message from '../helpers/message.ts';
+import env from '../helpers/env.ts';
 
 export default class Option implements OptionType.Type {
 	#synopsis: string;

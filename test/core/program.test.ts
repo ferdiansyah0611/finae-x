@@ -1,7 +1,7 @@
 // deno-lint-ignore-file no-explicit-any
-import { Program } from '@/mod.ts';
 import { assertEquals } from 'https://deno.land/std@0.201.0/assert/assert_equals.ts';
-import { HelpType } from '@/types.d.ts';
+import { Program } from '../../mod.ts';
+import { HelpType } from '../../types.d.ts';
 
 let response = null;
 const description = 'description';

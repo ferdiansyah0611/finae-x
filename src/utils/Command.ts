@@ -1,10 +1,10 @@
-import { ArgumentType, CommandType, OptionType, ProgramType } from '@/types.d.ts';
-import { sprintf } from 'printf';
-import Option from '@/src/utils/Option.ts';
-import Help from '@/src/utils/Help.ts';
-import highlight from '@/src/helpers/highlight.ts';
-import Argument from '@/src/utils/Argument.ts';
-import message from '@/src/helpers/message.ts';
+import { ArgumentType, CommandType, OptionType, ProgramType } from '../../types.d.ts';
+import { sprintf } from '../package/printf.ts';
+import Option from './Option.ts';
+import Help from './Help.ts';
+import Argument from './Argument.ts';
+import highlight from '../helpers/highlight.ts';
+import message from '../helpers/message.ts';
 
 class Command implements CommandType.Type {
 	#program!: ProgramType.Type;
