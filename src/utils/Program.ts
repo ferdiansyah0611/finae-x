@@ -1,9 +1,9 @@
 import { CommandType, HelpType, OptionType, ProgramType } from '../../types.d.ts';
 import { sprintf } from '../package/printf.ts';
 import Command from './Command.ts';
-import Parse from './Parse.ts';
 import Help from './Help.ts';
 import Option from './Option.ts';
+import parse from '../helpers/parse.ts';
 import highlight from '../helpers/highlight.ts';
 import message from '../helpers/message.ts';
 import suggest from '../helpers/suggest.ts';
@@ -117,7 +117,7 @@ class Program implements ProgramType.Type {
 
 	parse(shell: string[] | string): ProgramType.ParseResult {
 		if (typeof shell === 'string') shell = shell.split(' ');
-		const { _: argument, ...options } = Parse(shell);
+		const { _: argument, ...options } = parse(shell);
 		return { argument, options };
 	}
 
@@ -196,6 +196,7 @@ class Program implements ProgramType.Type {
 			return this.#response(currentCommand.showHelp(), null);
 		}
 		// check argument
+		let isVariadicArgument = false;
 		for (let i = 0; i < information.arguments.length; i++) {
 			const current = information.arguments[i];
 			const nextCallback = (howMuch: number) => (i += howMuch);
@@ -205,6 +206,11 @@ class Program implements ProgramType.Type {
 				const { results } = current.getInformation();
 				newArgument[results.fullName] = stats.data;
 			}
+			if (current.getInformation().config.isVariadic) isVariadicArgument = true;
+		}
+		// not same length argument
+		if (!isVariadicArgument && potentialArg.length > information.arguments.length) {
+			this.error(message.error.exceededArgument);
 		}
 
 		// find implies options before validation

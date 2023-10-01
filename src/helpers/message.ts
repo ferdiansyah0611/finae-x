@@ -12,6 +12,7 @@ const message = {
 		mustHaveOneLength: '%s \'%s\' must be have minimum 1 length',
 		isConflictsOption: 'Option \'%s\' cannot be used with option \'%s\'',
 		suggest: 'Did you mean \'%s\' ?',
+		exceededArgument: 'The argument has gone too far',
 	},
 	update(error: MessageType.Error) {
 		Object.assign(this.error, error);

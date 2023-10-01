@@ -63,8 +63,9 @@ To quickly get started with Finae-X, you can follow the code snippet above. It d
 
 ```ts
 import { Program } from 'finae-x/mod.ts';
+import { CommandType, ProgramType } from 'finae-x/types.d.ts';
 
-const program = new Program('MY CLI', 'description', {
+const program: ProgramType.Type = new Program('MY CLI', 'description', {
 	version: '1.0.0',
 });
 program
@@ -73,16 +74,16 @@ program
 program
 	.command('side', 'description')
 	.argument('name', 'description')
-	.action((argument, cmd) => console.log(argument.name));
+	.action((argument: any, cmd: CommandType.Type) => console.log(argument.name));
 program
 	.command('section', 'description')
 	.option('name', 'description')
-	.action((option, cmd) => console.log(option.name));
+	.action((option: any, cmd: CommandType.Type) => console.log(option.name));
 program
 	.command('bar', 'description')
 	.argument('name', 'description')
 	.option('name', 'description')
-	.action((argument, option) => console.log(argument.name, option.name));
+	.action((argument: any, option: any) => console.log(argument.name, option.name));
 program
 	.command('satset', 'description')
 	.argument('name', 'description')
@@ -92,10 +93,23 @@ program
 		console.log(this.opt);
 	});
 
-await program.exec('main');
-await program.exec('side ferdy');
-await program.exec('section --name shelby');
-await program.exec('bar dugem --name lorem');
+let result: ProgramType.ReturnExec;
+
+result = await program.exec('main');
+result = await program.exec('side ferdy');
+result = await program.exec('section --name shelby');
+result = await program.exec('bar dugem --name lorem');
+```
+
+## Sample Code
+
+Run command to view sample output
+
+```bash
+deno run -A https://raw.githubusercontent.com/ferdiansyah0611/finae-x/1.0.0/example/main.ts ferdiansyah0611 10
+deno run -A https://raw.githubusercontent.com/ferdiansyah0611/finae-x/1.0.0/example/drink.ts
+deno run -A https://raw.githubusercontent.com/ferdiansyah0611/finae-x/1.0.0/example/pizza.ts
+deno run -A https://raw.githubusercontent.com/ferdiansyah0611/finae-x/1.0.0/example/prompt.ts
 ```
 
 ## Documentation
@@ -110,8 +124,9 @@ It imports the Program class from the specified module and creates a new instanc
 
 ```ts
 import { Program } from 'finae-x/mod.ts';
+import { ProgramType } from 'finae-x/types.d.ts';
 
-const program = new Program('MY CLI', 'description', {
+const program: ProgramType.Type = new Program('MY CLI', 'description', {
 	version: '1.0.0',
 	// stderr: (err) => throw err,
 	// suggestAfterError: true
@@ -133,8 +148,10 @@ await program.exec('cmd arg1 arg2 --opt1 data1 --opt2 data2');
 It uses the addOption method to define options with their respective descriptions. The second option also demonstrates how to specify a data type for the option using a callback function.
 
 ```ts
+import { OptionType } from 'finae-x/types.d.ts';
+
 program.addOption('--verbose', description);
-program.addOption('--global', description, (cls) => cls.number());
+program.addOption('--global', description, (cls: OptionType.Type) => cls.number());
 ```
 
 #### Hook
@@ -142,16 +159,18 @@ program.addOption('--global', description, (cls) => cls.number());
 It uses the hook method to register callback functions for events such as pre-action, post-action, pre-error, and post-error.
 
 ```ts
-program.hook('preAction', (_cmd) => {
+import { CommandType } from 'finae-x/types.d.ts';
+
+program.hook('preAction', (_cmd: CommandType.Type | null) => {
 	console.log('preAction');
 });
-program.hook('postAction', (_cmd) => {
+program.hook('postAction', (_cmd: CommandType.Type | null) => {
 	console.log('postAction');
 });
-program.hook('preError', (_cmd) => {
+program.hook('preError', (_cmd: CommandType.Type | null) => {
 	console.log('preError');
 });
-program.hook('postError', (_cmd) => {
+program.hook('postError', (_cmd: CommandType.Type | null) => {
 	console.log('postError');
 });
 ```
@@ -184,7 +203,7 @@ It defines a command named "side" with a description. It also defines an argumen
 program
 	.command('side', 'description')
 	.argument('name', 'description')
-	.action((argument) => console.log(argument.name));
+	.action((argument: any) => console.log(argument.name));
 ```
 
 #### Nested
@@ -192,7 +211,9 @@ program
 The program has a root command named "root" with a description. It also has two sub-commands: "sub" and "world". When the "sub" command is executed, it prints "sub" to the console. Similarly, when the "world" command is executed, it prints "world" to the console. Additionally, the "down" command is a sub-command of "root" and has its own sub-command "data".
 
 ```ts
-const root = program.command('root', 'description');
+import { CommandType } from 'finae-x/types.d.ts';
+
+const root: CommandType.Type = program.command('root', 'description');
 // it will be 'root sub'
 root
 	.command('sub', 'description')
@@ -202,7 +223,7 @@ root
 	.command('world', 'description')
 	.action(() => console.log('world'));
 
-const down = root.command('down', 'description');
+const down: CommandType.Type = root.command('down', 'description');
 // it will be 'root down data'
 down.command('data').action(() => console.log('data'));
 ```
@@ -254,9 +275,11 @@ Explain the use of argument:
 Can provide their default values.
 
 ```ts
+import { ArgumentType } from 'finae-x/types.d.ts';
+
 program
 	.command('main', 'description')
-	.argument('name', 'description', (cls) => cls.default('ferdiansyah'))
+	.argument('name', 'description', (cls: ArgumentType.Type) => cls.default('ferdiansyah'))
 	.action(() => console.log('main'));
 ```
 
@@ -267,9 +290,9 @@ There are several data types such as string, float, and number. String as defaul
 ```ts
 program
 	.command('main', 'description')
-	.argument('str', 'description', (cls) => cls.string('default'))
-	.argument('number', 'description', (cls) => cls.number(100))
-	.argument('float', 'description', (cls) => cls.float(10.10));
+	.argument('str', 'description', (cls: ArgumentType.Type) => cls.string('default'))
+	.argument('number', 'description', (cls: ArgumentType.Type) => cls.number(100))
+	.argument('float', 'description', (cls: ArgumentType.Type) => cls.float(10.10));
 ```
 
 #### Include
@@ -279,7 +302,7 @@ Supports selection based on parameter data.
 ```ts
 program
 	.command('main', 'description')
-	.argument('style', 'description', (cls) => cls.include(['css', 'less', 'sass', 'scss']));
+	.argument('style', 'description', (cls: ArgumentType.Type) => cls.include(['css', 'less', 'sass', 'scss']));
 ```
 
 #### Exclude
@@ -289,7 +312,7 @@ Supports exceptions based on parameter data.
 ```ts
 program
 	.command('main', 'description')
-	.argument('format', 'description', (cls) => cls.exclude(['mp3', 'mp4']));
+	.argument('format', 'description', (cls: ArgumentType.Type) => cls.exclude(['mp3', 'mp4']));
 ```
 
 #### Variadic
@@ -299,7 +322,7 @@ Supports unlimited values, making it an array.
 ```ts
 program
 	.command('main', 'description')
-	.argument('name', 'description', (cls) => cls.variadic());
+	.argument('name', 'description', (cls: ArgumentType.Type) => cls.variadic());
 ```
 
 #### Custom Validator
@@ -309,8 +332,8 @@ Supports custom validation, must return a value.
 ```ts
 program
 	.command('main', 'description')
-	.argument('name', 'description', (cls) =>
-		cls.validator((value) => {
+	.argument('name', 'description', (cls: ArgumentType.Type) =>
+		cls.validator((value: string | number) => {
 			if (typeof value === 'string' && value.includes('xxx')) return value.replaceAll('xxx', '[removed]');
 			return value;
 		}));
@@ -325,9 +348,11 @@ Explain the use of options:
 Can provide their default values.
 
 ```ts
+import { OptionType } from 'finae-x/types.d.ts';
+
 program
 	.command('main', 'description')
-	.option('name', 'description', (cls) => cls.default('ferdiansyah'))
+	.option('name', 'description', (cls: OptionType.Type) => cls.default('ferdiansyah'))
 	.action(() => console.log('main'));
 ```
 
@@ -338,10 +363,10 @@ There are several data types such as string, boolean, float, and number. String 
 ```ts
 program
 	.command('main', 'description')
-	.option('str', 'description', (cls) => cls.string('default'))
-	.option('number', 'description', (cls) => cls.number(100))
-	.option('float', 'description', (cls) => cls.float(10.10));
-	.option('is', 'description', (cls) => cls.boolean());
+	.option('str', 'description', (cls: OptionType.Type) => cls.string('default'))
+	.option('number', 'description', (cls: OptionType.Type) => cls.number(100))
+	.option('float', 'description', (cls: OptionType.Type) => cls.float(10.10));
+	.option('is', 'description', (cls: OptionType.Type) => cls.boolean());
 ```
 
 #### Include
@@ -351,7 +376,7 @@ Supports selection based on parameter data.
 ```ts
 program
 	.command('main', 'description')
-	.option('style', 'description', (cls) => cls.include(['css', 'less', 'sass', 'scss']));
+	.option('style', 'description', (cls: OptionType.Type) => cls.include(['css', 'less', 'sass', 'scss']));
 ```
 
 #### Exclude
@@ -361,7 +386,7 @@ Supports exceptions based on parameter data.
 ```ts
 program
 	.command('main', 'description')
-	.option('format', 'description', (cls) => cls.exclude(['mp3', 'mp4']));
+	.option('format', 'description', (cls: OptionType.Type) => cls.exclude(['mp3', 'mp4']));
 ```
 
 #### Variadic
@@ -371,8 +396,8 @@ Supports unlimited values, making it an array.
 ```ts
 program
 	.command('main', 'description')
-	.option('name', 'description', (cls) => cls.variadic())
-	.option('number', 'description', (cls) => cls.number().variadic());
+	.option('name', 'description', (cls: OptionType.Type) => cls.variadic())
+	.option('number', 'description', (cls: OptionType.Type) => cls.number().variadic());
 ```
 
 #### Custom Validator
@@ -383,7 +408,7 @@ Supports custom validation, must return a value.
 program
 	.command('main', 'description')
 	.option('name', 'description', (cls) =>
-		cls.validator((value) => {
+		cls.validator((value: string | number) => {
 			if (typeof value === 'string' && value.includes('xxx')) return value.replaceAll('xxx', '[removed]');
 			return value;
 		}));
@@ -396,7 +421,7 @@ Commands will give an error if these options run simultaneously.
 ```ts
 program
 	.command('main', 'description')
-	.option('port', 'description', (cls) => cls.conflicts('default-port', 'default-config'))
+	.option('port', 'description', (cls: OptionType.Type) => cls.conflicts('default-port', 'default-config'))
 	.option('default-port', 'description');
 	.option('default-config', 'description');
 ```
@@ -408,7 +433,7 @@ Options will provide a default value to the specified options if the options do 
 ```ts
 program
 	.command('main', 'description')
-	.option('port', 'description', (cls) => cls.implies({ 'default-port': 3721 }))
+	.option('port', 'description', (cls: OptionType.Type) => cls.implies({ 'default-port': 3721 }))
 	.option('default-port', 'description');
 ```
 
@@ -419,7 +444,7 @@ Commands will give an error if the options do not have a value.
 ```ts
 program
 	.command('main', 'description')
-	.option('port', 'description', (cls) => cls.required());
+	.option('port', 'description', (cls: OptionType.Type) => cls.required());
 ```
 
 #### ENV
@@ -429,7 +454,7 @@ Options will provide a default value to the specified environment if the options
 ```ts
 program
 	.command('main', 'description')
-	.option('port', 'description', (cls) => cls.env('PORT'));
+	.option('port', 'description', (cls: OptionType.Type) => cls.env('PORT'));
 ```
 
 #### Hidden from Help
@@ -439,7 +464,7 @@ Hides options from help output.
 ```ts
 program
 	.command('main', 'description')
-	.option('name', 'description', (cls) => cls.hideHelp());
+	.option('name', 'description', (cls: OptionType.Type) => cls.hideHelp());
 ```
 
 ### Help
@@ -504,7 +529,7 @@ Explains other features:
 Activate this feature if you want to add an error message to a suggestion.
 
 ```ts
-const program = new Program('MY CLI', 'description', {
+const program: ProgramType.Type = new Program('MY CLI', 'description', {
 	version: '1.0.0',
 	suggestAfterError: true,
 });
@@ -515,6 +540,7 @@ const program = new Program('MY CLI', 'description', {
 You can change the error message with the specified key.
 
 ```ts
+import { ProgramType } from 'finae-x/types.d.ts';
 import message from 'finae-x/src/helpers/message.ts';
 import stderr from 'finae-x/src/helpers/stderr.ts';
 
@@ -529,9 +555,10 @@ message.update({
 	mustHaveOneLength: '%s \'%s\' harus memiliki minimal punya 1 data',
 	isConflictsOption: 'Pilihan \'%s\' tidak bisa digunakan dengan pilihan \'%s\'',
 	suggest: 'Apakah maksud kamu \'%s\' ?',
+	exceededArgument: 'Argumen telah melewati batas',
 });
 
-const program = new Program('MY CLI', 'description', {
+const program: ProgramType.Type = new Program('MY CLI', 'description', {
 	version: '1.0.0',
 	stderr(error) {
 		if (Array.isArray(error)) {

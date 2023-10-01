@@ -3,7 +3,7 @@ interface CommandLineArgs {
 	[key: string]: string | string[] | boolean;
 }
 
-export default function Parse(args: string[]): CommandLineArgs {
+export default function parse(args: string[]): CommandLineArgs {
 	const result: CommandLineArgs = { _: [] };
 
 	let currentKey: string | null = null;

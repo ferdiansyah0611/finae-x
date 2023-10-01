@@ -1,6 +1,8 @@
+// deno-lint-ignore-file no-explicit-any
 import { Program } from '../mod.ts';
+import { ProgramType, OptionType } from '../types.d.ts';
 
-const program = new Program('Drink CLI', 'An application for drink ordering', {
+const program: ProgramType.Type = new Program('Drink CLI', 'An application for drink ordering', {
 	version: '1.0.0',
 });
 
@@ -9,10 +11,10 @@ program
 	.option(
 		'size',
 		'select size',
-		(cls) => cls.include(['small', 'medium', 'big']),
+		(cls: OptionType.Type) => cls.include(['small', 'medium', 'big']),
 	)
-	.option('free', 'free drink', (cls) => cls.implies({ size: 'small' }))
-	.action((options) => {
+	.option('free', 'free drink', (cls: OptionType.Type) => cls.implies({ size: 'small' }))
+	.action((options: any) => {
 		console.log('You ordered a drink with:');
 		console.log('- %s size', options.size);
 		if (options.free) console.log('- Free Price');

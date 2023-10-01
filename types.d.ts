@@ -704,5 +704,6 @@ export namespace MessageType {
 		mustHaveOneLength: string;
 		isConflictsOption: string;
 		suggest: string;
+		exceededArgument: string;
 	};
 }
