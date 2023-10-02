@@ -1,6 +1,6 @@
 // deno-lint-ignore-file no-explicit-any
 import { Program } from '../mod.ts';
-import { ProgramType, OptionType } from '../types.d.ts';
+import { OptionType, ProgramType } from '../types.d.ts';
 
 const program: ProgramType.Type = new Program('Pizza CLI', 'An application for pizza ordering', {
 	version: '1.0.0',

@@ -78,6 +78,8 @@ export namespace ProgramType {
 			data: string[][],
 			raw?: string,
 		): Type;
+
+		setHelpRaw(callback: (info: HelpType.Info, command: CommandType.Type | null) => string): void;
 	}
 	/**
 	 * Represents return parse
@@ -131,6 +133,7 @@ export namespace ProgramType {
 		sectionHelp?: {
 			[key: string]: HelpType.ItemSection[];
 		};
+		callbackHelpRaw?: (info: HelpType.Info, command: CommandType.Type | null) => string;
 	};
 	/**
 	 * Represents the type hook event
@@ -210,7 +213,7 @@ export namespace CommandType {
 		 * Retrieves the nested commands defined in the command.
 		 * @returns An array of nested commands.
 		 */
-		getNested(): CommandType.Type[] | number[];
+		getNested(): CommandType.Type[];
 		/**
 		 * Retrieves the key nested commands defined in the command.
 		 * @returns An array of number nested commands.
@@ -549,6 +552,16 @@ export namespace HelpType {
 	 * Represents a item for custom section help.
 	 */
 	type ItemSectionData = { title: string; description: string };
+	/**
+	 * Represents a info help.
+	 */
+	type Info = {
+		name: string;
+		description: string;
+		version: string;
+		collection: Collection;
+		isCommand: boolean;
+	};
 }
 
 export namespace ValidationType {

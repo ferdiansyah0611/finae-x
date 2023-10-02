@@ -101,6 +101,10 @@ class Program implements ProgramType.Type {
 		return result;
 	}
 
+	setHelpRaw(callback: (info: HelpType.Info, command: CommandType.Type | null) => string): void {
+		this.#setup.callbackHelpRaw = callback;
+	}
+
 	error(message: string[] | string): ProgramType.Type {
 		if (Array.isArray(message)) {
 			this.#setup.errors = this.#setup.errors.concat(message);
@@ -164,22 +168,27 @@ class Program implements ProgramType.Type {
 			result.push(counter);
 		}
 		const max = Math.max(...result);
-		const index = result.indexOf(max);
+		let index = result.indexOf(max);
 		// command not found
 		if (result.every((value) => value === result[0]) && result.length > 1) {
-			let text = sprintf(message.error.cmdNotFound, shellStr);
-			if (this.#config.suggestAfterError) {
-				const index = suggest(
-					argument.join(' '),
-					this.#commands.map((item) => item.getInformation().name),
-				);
-				if (index !== -1) {
-					text += ' ' + sprintf(message.error.suggest, this.#commands[index].getInformation().name);
+			// like [1, 1, 1, 1, 1] at 0 as current index
+			if (result[0] > 0) {
+				index = 0;
+			} else {
+				let text = sprintf(message.error.cmdNotFound, shellStr);
+				if (this.#config.suggestAfterError) {
+					const index = suggest(
+						argument.join(' '),
+						this.#commands.map((item) => item.getInformation().name),
+					);
+					if (index !== -1) {
+						text += ' ' + sprintf(message.error.suggest, this.#commands[index].getInformation().name);
+					}
 				}
+				this.error(text);
+				this.#emitError(null);
+				return this.#response(undefined, null);
 			}
-			this.error(text);
-			this.#emitError(null);
-			return this.#response(undefined, null);
 		}
 		const currentCommand = this.#commands[index];
 		const information = {
@@ -232,15 +241,15 @@ class Program implements ProgramType.Type {
 		// deno-lint-ignore no-explicit-any
 		const unknownOption: { [key: string]: any } = {};
 		for (const key in options) {
-			let isValid = false;
-			for (const current of information.options) {
-				const { results } = current.getInformation();
-				if (key === results.char || key === results.fullName) {
-					isValid = true;
-					break;
-				}
-			}
+			const isValid = findRelatedOption(information.options, key);
 			if (!isValid) {
+				// check global
+				const globalOption = findRelatedOption(this.#setup.options, key);
+				if (globalOption) {
+					const stats = globalOption.doValidation(options);
+					this.error(stats.fail);
+					continue;
+				}
 				if (isAllowUnknown) {
 					unknownOption[key] = options[key];
 					continue;
@@ -334,6 +343,18 @@ class Program implements ProgramType.Type {
 			}
 		}
 	}
+}
+
+function findRelatedOption(array: OptionType.Type[], key: string): OptionType.Type | undefined {
+	let result;
+	for (const current of array) {
+		const { results } = current.getInformation();
+		if (key === results.char || key === results.fullName) {
+			result = current;
+			break;
+		}
+	}
+	return result;
 }
 
 export default Program;

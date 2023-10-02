@@ -7,18 +7,15 @@ type ItemType = ArgumentType.Type | CommandType.Type | OptionType.Type | any;
 type SectionCallbackReturn = { title: string; description: string };
 
 export default class Help implements HelpType.Type {
+	/**
+	 * current program
+	 */
 	#program: ProgramType.Type;
 	/**
 	 * current command
 	 */
 	#command: CommandType.Type | null;
-	#info: {
-		name: string;
-		description: string;
-		version: string;
-		collection: HelpType.Collection;
-		isCommand: boolean;
-	};
+	#info: HelpType.Info;
 	constructor(
 		name: string,
 		description: string,
@@ -34,6 +31,9 @@ export default class Help implements HelpType.Type {
 	}
 	compile(): string {
 		const setup = this.#program.getSetup();
+		if (setup.callbackHelpRaw) {
+			return setup.callbackHelpRaw(this.#info, this.#command);
+		}
 		const { collection } = this.#info;
 		const allowToMakeSection = (section: HelpType.ItemSection): boolean => {
 			if (section.key === null) return true;

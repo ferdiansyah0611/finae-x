@@ -40,6 +40,7 @@ Finae-X is a command-line interface (CLI) tool that allows you to perform variou
   - [Help](#help)
     - [Custom Help](#custom-help)
     - [Custom Section](#custom-section)
+    - [Custom Raw](#custom-raw)
     - [Manual Show Help](#manual-show-help)
   - [More Feature](#more-feature)
     - [Suggest After Error](#suggest-after-error)
@@ -507,6 +508,48 @@ Important!
 This is raw text
 `,
 );
+```
+
+### Custom Raw
+
+You can set raw output.
+
+```ts
+program.setHelpRaw((info, command) => {
+	let cmd, argument, option;
+	function eachCMD(array: CommandType.Type[]) {
+		return array.map((val) => {
+			const detail = val.getInformation();
+			return `  ${detail.name}  \t${detail.description.toUpperCase()}`;
+		}).join('\n');
+	}
+
+	if (command) {
+		cmd = eachCMD(command.getNested());
+		argument = command.getArgument().map((val) => {
+			const detail = val.getInformation();
+			return `  ${detail.synopsis} (${detail.config.type})\n  ${detail.description.toUpperCase()}\n`;
+		}).join('\n');
+		option = command.getOption().map((val) => {
+			const detail = val.getInformation();
+			return `  ${detail.synopsis} (${detail.config.type})\n  ${detail.description.toUpperCase()}\n`;
+		}).join('\n');
+	} else {
+		cmd = eachCMD(program.getAllCommands());
+	}
+
+	let text = `${info.name} v${info.version}`;
+	if (cmd) {
+		text += `\n\nCommand\n${cmd}`;
+	}
+	if (argument) {
+		text += `\n\nArgument\n${argument}`;
+	}
+	if (option) {
+		text += `\nOption\n\n${option}`;
+	}
+	return text;
+});
 ```
 
 #### Manual Show Help
