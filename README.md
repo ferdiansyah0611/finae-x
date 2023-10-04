@@ -53,7 +53,7 @@ Add imports path to deno.json
 ```json
 {
 	"imports": {
-		"finae-x/": "https://cdn.jsdelivr.net/gh/ferdiansyah0611/finae-x/"
+		"finae-x/": "https://deno.land/x/finae_x/"
 	}
 }
 ```
@@ -107,10 +107,10 @@ result = await program.exec('bar dugem --name lorem');
 Run command to view sample output
 
 ```bash
-deno run -A https://raw.githubusercontent.com/ferdiansyah0611/finae-x/1.0.0/example/main.ts ferdiansyah0611 10
-deno run -A https://raw.githubusercontent.com/ferdiansyah0611/finae-x/1.0.0/example/drink.ts
-deno run -A https://raw.githubusercontent.com/ferdiansyah0611/finae-x/1.0.0/example/pizza.ts
-deno run -A https://raw.githubusercontent.com/ferdiansyah0611/finae-x/1.0.0/example/prompt.ts
+deno run -A https://deno.land/x/finae_x/example/main.ts ferdiansyah0611 10
+deno run -A https://deno.land/x/finae_x/example/drink.ts
+deno run -A https://deno.land/x/finae_x/example/pizza.ts
+deno run -A https://deno.land/x/finae_x/example/prompt.ts
 ```
 
 ## Documentation
